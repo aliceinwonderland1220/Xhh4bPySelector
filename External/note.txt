@@ -1,3 +1,0 @@
-External pkgs to be checked out
-1. PySelectorBase (contained in this pkg)
-2. AutoHists (svn+ssh://qzeng@svn.cern.ch/reps/atlasinst/Institutes/SLAC/AutoHists/trunk)

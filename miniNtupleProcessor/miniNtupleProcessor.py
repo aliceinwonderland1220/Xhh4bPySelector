@@ -8,9 +8,16 @@ import os
 ##################
 ## load library ##
 ##################
-# histogram maker service #
-ROOT.gSystem.Load(os.environ['HOME']+"/Install/AutoHists/lib/libAutoHists")
 
+print "Loading libraries ..."
+
+# histogram maker service #
+ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/AutoHists/libAutoHists.so")
+
+# ProofAnaCore #
+ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/ProofAnaCore/libProofAnaCore.so")
+
+print "Finish loading libraries!"
 
 class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 	def Setup(self):
@@ -174,27 +181,30 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		LeadCaloJet = ROOT.TLorentzVector()
 		LeadCaloJet.SetPtEtaPhiM(tree.jet_ak10LCtrim_pt[0]/1000., tree.jet_ak10LCtrim_eta[0], tree.jet_ak10LCtrim_phi[0], tree.jet_ak10LCtrim_m[0]/1000.)
+		LeadCaloJet = ROOT.Particle(LeadCaloJet)
+
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.jet_ak10LCtrim_pt[1]/1000., tree.jet_ak10LCtrim_eta[1], tree.jet_ak10LCtrim_phi[1], tree.jet_ak10LCtrim_m[1]/1000.)
+		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
 
-		self.histsvc.Set("LeadCaloJetPt", LeadCaloJet.Pt())
-		self.histsvc.Set("LeadCaloJetEta", LeadCaloJet.Eta())
-		self.histsvc.Set("LeadCaloJetPhi", LeadCaloJet.Phi())
-		self.histsvc.Set("LeadCaloJetM", LeadCaloJet.M())
+		self.histsvc.Set("LeadCaloJetPt", LeadCaloJet.p.Pt())
+		self.histsvc.Set("LeadCaloJetEta", LeadCaloJet.p.Eta())
+		self.histsvc.Set("LeadCaloJetPhi", LeadCaloJet.p.Phi())
+		self.histsvc.Set("LeadCaloJetM", LeadCaloJet.p.M())
 
-		self.histsvc.Set("SubLeadCaloJetPt", SubLeadCaloJet.Pt())
-		self.histsvc.Set("SubLeadCaloJetEta", SubLeadCaloJet.Eta())
-		self.histsvc.Set("SubLeadCaloJetPhi", SubLeadCaloJet.Phi())
-		self.histsvc.Set("SubLeadCaloJetM", SubLeadCaloJet.M())
+		self.histsvc.Set("SubLeadCaloJetPt", SubLeadCaloJet.p.Pt())
+		self.histsvc.Set("SubLeadCaloJetEta", SubLeadCaloJet.p.Eta())
+		self.histsvc.Set("SubLeadCaloJetPhi", SubLeadCaloJet.p.Phi())
+		self.histsvc.Set("SubLeadCaloJetM", SubLeadCaloJet.p.M())
 
-		self.histsvc.Set("DiJetDeltaPhi", LeadCaloJet.DeltaPhi(SubLeadCaloJet))
-		self.histsvc.Set("DiJetMass", (LeadCaloJet + SubLeadCaloJet).M())
+		self.histsvc.Set("DiJetDeltaPhi", LeadCaloJet.p.DeltaPhi(SubLeadCaloJet.p))
+		self.histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
 
 		##
 		## calo-jet dEta cuts
 		## 
 
-		PassdEtaCut = (abs(LeadCaloJet.Eta() - SubLeadCaloJet.Eta()) < 1.7)
+		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
 
 		if not PassdEtaCut:
 			return
@@ -260,7 +270,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			if TrackJet.Pt() < self._TrackJetPtCut: continue
 			if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
 
-			AssocTrackJets_LeadCaloJet.append( (TrackJet, tree.jet_ak2track_asso_MV2c20[0][iTrackJet]) )
+			TrackJet = ROOT.Particle(TrackJet)
+			TrackJet.Set(ROOT.MomKey("MV2c20"), tree.jet_ak2track_asso_MV2c20[0][iTrackJet])
+
+			AssocTrackJets_LeadCaloJet.append( TrackJet )
 
 		AssocTrackJets_SubLeadCaloJet = []
 		for iTrackJet in range(tree.jet_ak2track_asso_pt[1].size()):
@@ -270,7 +283,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			if TrackJet.Pt() < self._TrackJetPtCut: continue
 			if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
 
-			AssocTrackJets_SubLeadCaloJet.append( (TrackJet, tree.jet_ak2track_asso_MV2c20[1][iTrackJet]) )
+			TrackJet = ROOT.Particle(TrackJet)
+			TrackJet.Set(ROOT.MomKey("MV2c20"), tree.jet_ak2track_asso_MV2c20[1][iTrackJet])
+
+			AssocTrackJets_SubLeadCaloJet.append( TrackJet )
 
 		Pass4GoodTrackJet = ( (len(AssocTrackJets_LeadCaloJet) >= 2) and (len(AssocTrackJets_SubLeadCaloJet) >= 2) )
 		if not Pass4GoodTrackJet:
@@ -281,10 +297,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		AssocTrackJets = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet ]
 
-		self.histsvc.Set("LeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][0][0].Pt())
-		self.histsvc.Set("SubLeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][1][0].Pt())
-		self.histsvc.Set("LeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][0][0].Pt())
-		self.histsvc.Set("SubLeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][1][0].Pt())
+		self.histsvc.Set("LeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][0].p.Pt())
+		self.histsvc.Set("SubLeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][1].p.Pt())
+		self.histsvc.Set("LeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][0].p.Pt())
+		self.histsvc.Set("SubLeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][1].p.Pt())
 
 		# no b-tags, but with track-jet multiplicity requirement
 		if PassSBMass:
@@ -311,7 +327,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		numbtrackjet_90_detail = [0, 0]
 		for iCaloJet in range(2):
 			for iTrackJet in range(2):
-				(TrackJet, MV2c20) = AssocTrackJets[iCaloJet][iTrackJet]
+				TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
+				MV2c20 = TrackJet.Double(ROOT.MomKey("MV2c20"))
 
 				if ( MV2c20 > self._MV2c20CutDict[self._TrackJetWP] ):
 					numbtrackjet += 1
@@ -389,8 +406,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		Hlead = 125.
 		HSubl = 115.
 
-		mass_lead = j1.M()
-		mass_sublead = j2.M()
+		mass_lead = j1.p.M()
+		mass_sublead = j2.p.M()
 
 		if (mass_lead <= 0) or (mass_sublead <= 0):
 			print 'WARNING! How could you get non-positive mass? It will be assigned to side-band region',mass_lead,mass_sublead

@@ -1,3 +1,6 @@
 *.pyc
 Skim/*.root
 miniNtupleProcessor/*.root
+lib/
+External/AutoHists/
+External/ProofAnaCore/

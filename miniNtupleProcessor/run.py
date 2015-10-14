@@ -23,3 +23,6 @@ def runProofLite():
 	time.sleep(1)
 
 	dataset.Process("TPySelector", "miniNtupleProcessor")
+
+if __name__ == "__main__":
+	runProofLite()
