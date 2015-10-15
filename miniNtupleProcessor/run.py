@@ -5,13 +5,13 @@ from os.path import dirname, abspath
 import os
 
 treename = "XhhMiniNtuple"
-filename = os.environ["Xhh4bPySelector_dir"]+"/Skim/hh4b_boosted_PassLeadSubLeadJetPt.root"
+filename = os.environ["Xhh4bPySelector_dir"]+"/../hh4b_boosted_PassLeadSubLeadJetPt_v00-00-00.root"
 
-# def runLocal():
-# 	dataset = ROOT.TChain("XhhMiniNtuple")
-# 	dataset.Add(filename)
+def runLocal():
+	dataset = ROOT.TChain("XhhMiniNtuple")
+	dataset.Add(filename)
 
-# 	dataset.Process("TPySelector", "miniNtupleProcessor")
+	dataset.Process("TPySelector", "miniNtupleProcessor")
 
 def runProofLite():
 	dataset = ROOT.TDSet('TTree', 'XhhMiniNtuple')

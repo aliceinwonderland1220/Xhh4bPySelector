@@ -98,10 +98,20 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
 		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 50, 0, 5000)
 
-		self.histsvc.Book("LeadTrackJetPt_LeadCaloJet", "LeadTrackJetPt_LeadCaloJet", self._EvtWeight, 10, 0, 500)
-		self.histsvc.Book("SubLeadTrackJetPt_LeadCaloJet", "SubLeadTrackJetPt_LeadCaloJet", self._EvtWeight, 10, 0, 500)
-		self.histsvc.Book("LeadTrackJetPt_SubLeadCaloJet", "LeadTrackJetPt_SubLeadCaloJet", self._EvtWeight, 10, 0, 500)
-		self.histsvc.Book("SubLeadTrackJetPt_SubLeadCaloJet", "SubLeadTrackJetPt_SubLeadCaloJet", self._EvtWeight, 10, 0, 500)
+		self.TrackJetNameList = [
+		                         "LeadTrackJet_LeadCaloJet",
+		                         "SubLeadTrackJet_LeadCaloJet",
+		                         "LeadTrackJet_SubLeadCaloJet",
+		                         "SubLeadTrackJet_SubLeadCaloJet",
+		                        ]
+
+		for TrackJetName in self.TrackJetNameList:
+			self.histsvc.Book(TrackJetName + "_Pt", TrackJetName + "_Pt", self._EvtWeight, 10, 0, 500)
+			self.histsvc.Book(TrackJetName + "_Eta", TrackJetName + "_Eta", self._EvtWeight, 25, -2.5, 2.5)
+			self.histsvc.Book(TrackJetName + "_Phi", TrackJetName + "_Phi", self._EvtWeight, 35, -3.5, 3.5)
+			self.histsvc.Book(TrackJetName + "_M", TrackJetName + "_M", self._EvtWeight, 20, 0, 1000)
+			self.histsvc.Book(TrackJetName + "_E", TrackJetName + "_E", self._EvtWeight, 20, 0, 1000)
+			self.histsvc.Book(TrackJetName + "_MV2c20", TrackJetName + "_MV2c20", self._EvtWeight, 220, -1.1, 1.1)
 
 		###############################
 		# Initialize other tools here #
@@ -249,13 +259,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# no b-tags, no track-jet multiplicity requirement
 		if PassSBMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCutPassSBMass", _isMC)
 			self.MakeCutflowPlot(tree, "PassdEtaCutPassSBMass", _isMC)
 		if PassCRMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCutPassCRMass", _isMC)
 			self.MakeCutflowPlot(tree, "PassdEtaCutPassCRMass", _isMC)
 		if PassSRMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCutPassSRMass", _isMC)
 			self.MakeCutflowPlot(tree, "PassdEtaCutPassSRMass", _isMC)
 
 		############################
@@ -288,30 +295,60 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			AssocTrackJets_SubLeadCaloJet.append( TrackJet )
 
-		Pass4GoodTrackJet = ( (len(AssocTrackJets_LeadCaloJet) >= 2) and (len(AssocTrackJets_SubLeadCaloJet) >= 2) )
-		if not Pass4GoodTrackJet:
+		##
+		## Track-jet multiplicity
+		##
+
+		TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
+
+		Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
+		Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
+
+		if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
 			return
 
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
-		self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
+		# just an alert here ... 
+		if Pass4GoodTrackJet and Pass3GoodTrackJet:
+			print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
+			sys.exit()
+			return
+
+		if Pass4GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
+		if Pass3GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
 
 		AssocTrackJets = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet ]
 
-		self.histsvc.Set("LeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][0].p.Pt())
-		self.histsvc.Set("SubLeadTrackJetPt_LeadCaloJet", AssocTrackJets[0][1].p.Pt())
-		self.histsvc.Set("LeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][0].p.Pt())
-		self.histsvc.Set("SubLeadTrackJetPt_SubLeadCaloJet", AssocTrackJets[1][1].p.Pt())
+		# assign correct object
+		LeadTrackJet_LeadCaloJet       = AssocTrackJets[0][0]
+		SubLeadTrackJet_LeadCaloJet    = (AssocTrackJets[0][1] if len(AssocTrackJets[0]) >= 2 else None)
+		LeadTrackJet_SubLeadCaloJet    = AssocTrackJets[1][0]
+		SubLeadTrackJet_SubLeadCaloJet = (AssocTrackJets[1][1] if len(AssocTrackJets[1]) >= 2 else None)
+
+		# fill all variables
+		self.FillTrackJetVars(LeadTrackJet_LeadCaloJet, "LeadTrackJet_LeadCaloJet")
+		self.FillTrackJetVars(SubLeadTrackJet_LeadCaloJet, "SubLeadTrackJet_LeadCaloJet")
+		self.FillTrackJetVars(LeadTrackJet_SubLeadCaloJet, "LeadTrackJet_SubLeadCaloJet")
+		self.FillTrackJetVars(SubLeadTrackJet_SubLeadCaloJet, "SubLeadTrackJet_SubLeadCaloJet")
 
 		# no b-tags, but with track-jet multiplicity requirement
-		if PassSBMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJetPassSBMass", _isMC)
-			self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassSBMass", _isMC)
-		if PassCRMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJetPassCRMass", _isMC)
-			self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassCRMass", _isMC)
-		if PassSRMass:
-			# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJetPassSRMass", _isMC)
-			self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassSRMass", _isMC)
+		if Pass4GoodTrackJet:
+			if PassSBMass:
+				self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassSBMass", _isMC)
+			if PassCRMass:
+				self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassCRMass", _isMC)
+			if PassSRMass:
+				self.MakeCutflowPlot(tree, "Pass4GoodTrackJetPassSRMass", _isMC)
+		if Pass3GoodTrackJet:
+			if PassSBMass:
+				self.MakeCutflowPlot(tree, "Pass3GoodTrackJetPassSBMass", _isMC)
+			if PassCRMass:
+				self.MakeCutflowPlot(tree, "Pass3GoodTrackJetPassCRMass", _isMC)
+			if PassSRMass:
+				self.MakeCutflowPlot(tree, "Pass3GoodTrackJetPassSRMass", _isMC)
 
 		###########################
 		# Now we play with b-tags #
@@ -325,8 +362,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		numbtrackjet_80_detail = [0, 0]
 		numbtrackjet_90 = 0
 		numbtrackjet_90_detail = [0, 0]
+
 		for iCaloJet in range(2):
-			for iTrackJet in range(2):
+			for iTrackJet in range( min(2, len(AssocTrackJets[iCaloJet])) ):
 				TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
 				MV2c20 = TrackJet.Double(ROOT.MomKey("MV2c20"))
 
@@ -365,17 +403,26 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				if PassBtagDecision:
 					self.MakeCutflowPlot(tree, PassBtagName+WP, _isMC)
 
-					if PassSBMass:
-						self.MakeCutflowPlot(tree, PassBtagName+WP+"PassSBMass", _isMC)
-						self.histsvc.MakeHists("GoodEvent", "_"+PassBtagName+WP+"PassSBMass")
-					if PassCRMass:
-						self.MakeCutflowPlot(tree, PassBtagName+WP+"PassCRMass", _isMC)
-						self.histsvc.MakeHists("GoodEvent", "_"+PassBtagName+WP+"PassCRMass")
-					if PassSRMass:
-						self.MakeCutflowPlot(tree, PassBtagName+WP+"PassSRMass", _isMC)
-						self.histsvc.MakeHists("GoodEvent", "_"+PassBtagName+WP+"PassSRMass")
-
-		self.histsvc.Reset()
+					if Pass4GoodTrackJet:
+						if PassSBMass:
+							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass")
+						if PassCRMass:
+							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass")
+						if PassSRMass:
+							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass")
+					if Pass3GoodTrackJet:
+						if PassSBMass:
+							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass")
+						if PassCRMass:
+							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass")
+						if PassSRMass:
+							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass")
 
 	######################################################################
 	# Below is utility region
@@ -435,7 +482,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		if isMC: 
 			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CounEntry_%s", tree.mcChannelNumber, 1, 21, 301486.5, 301507.5)
 			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CounWeight_%s", tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
-			
+	
+	def FillTrackJetVars(self, TrackJet, TrackJetName):
+		if not TrackJet:
+			return
+		else:
+			self.histsvc.Set(TrackJetName + "_Pt", TrackJet.p.Pt())
+			self.histsvc.Set(TrackJetName + "_Eta", TrackJet.p.Eta())
+			self.histsvc.Set(TrackJetName + "_Phi", TrackJet.p.Phi())
+			self.histsvc.Set(TrackJetName + "_M", TrackJet.p.M())
+			self.histsvc.Set(TrackJetName + "_E", TrackJet.p.E())
+			self.histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double(ROOT.MomKey("MV2c20")))
+
 
 
 
