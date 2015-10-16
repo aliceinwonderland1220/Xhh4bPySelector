@@ -25,7 +25,8 @@ def skim(selection, filename):
 	print "Finish skimming. Output is in %s" % (filename)
 
 def test():
-	# skim("PassBoosted == 1", "hh4b_boosted.root")
+	# setInput("../../RSG.root")
+	# skim("PassBoosted == 1", "RSG_boosted.root")
 
-	setInput("hh4b_boosted.root")
-	skim("(PassLeadJetPt == 1) && (PassSubLeadJetPt == 1)", "hh4b_boosted_PassLeadSubLeadJetPt.root")
+	setInput("RSG_boosted.root")
+	skim("(PassLeadJetPt == 1) && (PassSubLeadJetPt == 1)", "RSG_boosted_PassLeadSubLeadJetPt.root")

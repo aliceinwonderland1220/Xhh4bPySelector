@@ -7,7 +7,8 @@ compile() {
   sh domake.sh
   cd ..
   cd lib
-  ln -sf ../AutoHists/lib AutoHists
+  rm -f AutoHists
+  ln -s ../AutoHists/lib AutoHists
   cd ..
 
   # ProofAnaCore
@@ -16,7 +17,20 @@ compile() {
   make
   cd ..
   cd lib
-  ln -sf ../ProofAnaCore/lib ProofAnaCore
+  rm -f ProofAnaCore
+  ln -s ../ProofAnaCore/lib ProofAnaCore
+  cd ..
+
+  # PileupReweighting
+  echo "-----> Compiling PileupReweighting"
+  cd PileupReweighting/cmt
+  make -f Makefile.Standalone
+  cd ../StandAlone
+  ln -sf ../Root/TPileupReweightingCint_rdict.pcm
+  cd ../..
+  cd lib
+  rm -f PileupReweighting
+  ln -s ../PileupReweighting/StandAlone PileupReweighting
   cd ..
 }
 
@@ -31,6 +45,13 @@ clean() {
   echo "-----> Cleaning ProofAnaCore"
   cd ProofAnaCore
   make clean
+  cd ..
+  
+  echo "-----> Cleaning PileupReweighting"
+  cd PileupReweighting/cmt
+  make -f Makefile.Standalone clean
+  cd ..
+  rm -rf StandAlone
   cd ..
 }
 

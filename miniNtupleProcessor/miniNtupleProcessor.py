@@ -12,10 +12,19 @@ import os
 print "Loading libraries ..."
 
 # histogram maker service #
-ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/AutoHists/libAutoHists.so")
+if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/AutoHists/libAutoHists.so") != 0):
+	print "ERROR! Unable to load AutoHists!"
+	sys.exit()
 
 # ProofAnaCore #
-ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/ProofAnaCore/libProofAnaCore.so")
+if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/ProofAnaCore/libProofAnaCore.so") != 0):
+	print "ERROR! Unable to load ProofAnaCore!"
+	sys.exit()
+
+# PileupReweighting #
+if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/PileupReweighting/libPileupReweighting.so") != 0):
+	print "ERROR! Unable to load PileupReweighting!"
+	sys.exit()
 
 print "Finish loading libraries!"
 
@@ -63,9 +72,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._ApplyXsecWeight = True
 		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/Xsection.config"
-		self._Lumi = 1.        # unit to be compatible with Xsection.config
+		self._Lumi = 0.2129   #1.        # unit to be compatible with Xsection.config
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
+
+		#
+		# PRW
+
+		self._doPRW = False
+		self._PRWConfigFile = ""
+		self._PRWLumiCalcFile = ""
 
 		#####################
 		## Private Objects ##
@@ -88,12 +104,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Book("LeadCaloJetPt", "LeadCaloJetPt", self._EvtWeight, 12, 300, 900)
 		self.histsvc.Book("LeadCaloJetEta", "LeadCaloJetEta", self._EvtWeight, 25, -2.5, 2.5)
 		self.histsvc.Book("LeadCaloJetPhi", "LeadCaloJetPhi", self._EvtWeight, 35, -3.5, 3.5)
-		self.histsvc.Book("LeadCaloJetM", "LeadCaloJetM", self._EvtWeight, 20, 0, 1000)
+		self.histsvc.Book("LeadCaloJetM", "LeadCaloJetM", self._EvtWeight, 100, 0, 1000)
 
 		self.histsvc.Book("SubLeadCaloJetPt", "SubLeadCaloJetPt", self._EvtWeight, 12, 300, 900)
 		self.histsvc.Book("SubLeadCaloJetEta", "SubLeadCaloJetEta", self._EvtWeight, 25, -2.5, 2.5)
 		self.histsvc.Book("SubLeadCaloJetPhi", "SubLeadCaloJetPhi", self._EvtWeight, 35, -3.5, 3.5)
-		self.histsvc.Book("SubLeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 20, 0, 1000)
+		self.histsvc.Book("SubLeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 1000)
+
+		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 20, 0, 1000, 20, 0, 1000)
 
 		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
 		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 50, 0, 5000)
@@ -116,6 +134,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		###############################
 		# Initialize other tools here #
 		###############################
+
+		#
+		# PRW
+		# 
+
+		if self._doPRW:
+			self.PRWTool = ROOT.CP.TPileupReweighting()
+			self.PRWTool.AddConfigFile(self._PRWConfigFile)
+			self.PRWTool.AddLumiCalcFile(self._PRWLumiCalcFile)
+			self.PRWTool.Initialize()
+		else:
+			self.PRWTool = None
 
 	def ProcessEntry(self, tree, entry):
 
@@ -153,6 +183,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self._ApplyXsecWeight = False
 
 		if _isMC:
+			if self._doPRW:
+				PRW = self.PRWTool.GetCombinedWeight(tree.runNumber, tree.mcChannelNumber, tree.averageInteractionsPerCrossing)
+			else:
+				PRW = tree.weight_pileup
 			self._EvtWeight[0] = tree.mcEventWeight * tree.weight_pileup * self.GetXsecWeight(tree)
 		else:
 			self._EvtWeight[0] = 1.
@@ -480,8 +514,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.AutoFill("GoodEvent", "_Cutflow", "CountWeight_%s" % (cutName), 1, self._EvtWeight[0], 1, 0.5, 1.5)
 
 		if isMC: 
-			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CounEntry_%s", tree.mcChannelNumber, 1, 21, 301486.5, 301507.5)
-			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CounWeight_%s", tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
+			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountEntry_%s" % (cutName), tree.mcChannelNumber, 1, 21, 301486.5, 301507.5)
+			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountWeight_%s" % (cutName), tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
 	
 	def FillTrackJetVars(self, TrackJet, TrackJetName):
 		if not TrackJet:

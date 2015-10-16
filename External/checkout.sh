@@ -8,3 +8,6 @@ cd ..
 
 # ProofAnaCore
 svn co svn+ssh://qzeng@svn.cern.ch/reps/atlasinst/Institutes/SLAC/ProofAnaCore/trunk ProofAnaCore
+
+# PileupReweighting
+svn co svn+ssh://qzeng@svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/PileupReweighting/tags/PileupReweighting-00-03-11 PileupReweighting

@@ -4,3 +4,4 @@ miniNtupleProcessor/*.root
 lib/
 External/AutoHists/
 External/ProofAnaCore/
+External/PileupReweighting/
