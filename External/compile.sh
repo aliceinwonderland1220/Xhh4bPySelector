@@ -32,6 +32,18 @@ compile() {
   rm -f PileupReweighting
   ln -s ../PileupReweighting/StandAlone PileupReweighting
   cd ..
+
+  # GRL
+  echo "-----> Compiling GRL"
+  cd GoodRunsLists/cmt
+  make -f Makefile.Standalone
+  cd ../StandAlone
+  ln -sf ../Root/TGoodRunsListsCint_rdict.pcm
+  cd ../..
+  cd lib
+  rm -f GoodRunsLists
+  ln -s ../GoodRunsLists/StandAlone GoodRunsLists
+  cd ..
 }
 
 clean() {
@@ -49,6 +61,13 @@ clean() {
   
   echo "-----> Cleaning PileupReweighting"
   cd PileupReweighting/cmt
+  make -f Makefile.Standalone clean
+  cd ..
+  rm -rf StandAlone
+  cd ..
+
+  echo "-----> Cleaning GRL"
+  cd GoodRunsLists/cmt
   make -f Makefile.Standalone clean
   cd ..
   rm -rf StandAlone

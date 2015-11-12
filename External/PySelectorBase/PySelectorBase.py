@@ -58,6 +58,8 @@ class PySelectorBase (ROOT.TPySelector):
     self.SetupTTreeClass (tree)
 
   def SlaveBegin (self, tree):
+    print "In SlaveBegin"
+
     self.name= self.GetOption()
     self.Log ("slave beginning")
 
@@ -80,6 +82,8 @@ class PySelectorBase (ROOT.TPySelector):
   def ProcessEntry (self, tree, entry): pass
 
   def SlaveTerminate (self):
+    print "In SlaveTerminate"
+
     self.Log ("slave terminating after %d entries" % self.entryCount)
     self.outputfile.Write()
 

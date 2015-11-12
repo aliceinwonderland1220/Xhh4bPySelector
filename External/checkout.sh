@@ -11,3 +11,6 @@ svn co svn+ssh://qzeng@svn.cern.ch/reps/atlasinst/Institutes/SLAC/ProofAnaCore/t
 
 # PileupReweighting
 svn co svn+ssh://qzeng@svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/PileupReweighting/tags/PileupReweighting-00-03-11 PileupReweighting
+
+# GRL
+svn co svn+ssh://qzeng@svn.cern.ch/reps/atlasoff/DataQuality/GoodRunsLists/tags/GoodRunsLists-00-01-21 GoodRunsLists

@@ -1,30 +1,38 @@
+import os
 import ROOT
 import utils
 import PySelectorBase
 import array
 import sys
-import os
+from collections import defaultdict
 
 ##################
 ## load library ##
 ##################
 
+from ROOT import gSystem
 print "Loading libraries ..."
 
 # histogram maker service #
-if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/AutoHists/libAutoHists.so") != 0):
+if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/AutoHists/libAutoHists.so") != 0):
 	print "ERROR! Unable to load AutoHists!"
-	sys.exit()
+	sys.exit(0)
 
 # ProofAnaCore #
-if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/ProofAnaCore/libProofAnaCore.so") != 0):
+if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/ProofAnaCore/libProofAnaCore.so") != 0):
 	print "ERROR! Unable to load ProofAnaCore!"
-	sys.exit()
+	sys.exit(0)
 
 # PileupReweighting #
-if(ROOT.gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/PileupReweighting/libPileupReweighting.so") != 0):
+if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/PileupReweighting/libPileupReweighting.so") != 0):
 	print "ERROR! Unable to load PileupReweighting!"
-	sys.exit()
+	sys.exit(0)
+
+# GRL #
+if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/GoodRunsLists/libGoodRunsLists.so") != 0):
+	print "ERROR! Unable to load GoodRunsLists!"
+	sys.exit(0)
+ROOT.gROOT.ProcessLine('.include %s' % (os.environ['Xhh4bPySelector_dir']+"/External/GoodRunsLists"))
 
 print "Finish loading libraries!"
 
@@ -34,7 +42,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# selector options #
 		####################
 
-		self.histfile = "test.root"
+		self.histfile = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/test.root"       # use absolute path, and all output will be put under output folder
 		self.printInterval = 1000
 		# generate list of variables that will actuall be used by parsing current file
 		print ": URL of file to be parsed for varable activation"
@@ -58,21 +66,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._MV2c20CutDict = {
 			"70": -0.3098,
-			"80": -0.7132,
+			"77": -0.6134,
 			"85": -0.8433,
-			"90": -0.9291,
 		}
 
-		self._TriggerList = ["HLT_j70_btight_3j70", "HLT_j100_2j55_bmedium", "HLT_ht1000", "HLT_4j100", "HLT_j400"]   # list of triggers to be combined in OR
+		self._TriggerList = ["HLT_j70_btight_3j70", "HLT_j100_2j55_bmedium", "HLT_ht700", "HLT_4j85", "HLT_j360"]   # list of triggers to be combined in OR
 		self._doTriggerCut = True
 
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
-		self._TrackJetWP = "80"
+		self._TrackJetWP = ["70", "77", "85"]    # list of WP to consider
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/Xsection.config"
-		self._Lumi = 0.2129   #1.        # unit to be compatible with Xsection.config
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-01-03_Xsection.config"
+
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v70-pro19-04_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
+		self._Lumi = 1.41126        # unit to be compatible with Xsection.config
+		                            # Number for hh4b-v00-v01-03
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
 
@@ -114,7 +124,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 20, 0, 1000, 20, 0, 1000)
 
 		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
-		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 50, 0, 5000)
+		#self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 50, 0, 5000)
+		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 100, 0, 5000)
 
 		self.TrackJetNameList = [
 		                         "LeadTrackJet_LeadCaloJet",
@@ -147,7 +158,24 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		else:
 			self.PRWTool = None
 
+		#
+		# GRL
+		#
+
+		if self._GRLXml != "":
+			self.GRLTool = ROOT.Root.TGoodRunsListReader()
+			self.GRLTool.SetXMLFile(self._GRLXml)
+			self.GRLTool.Interpret()
+			self.GRL = self.GRLTool.GetMergedGoodRunsList()
+		else:
+			self.GRLTool = None
+			self.GRL = None
+
+		self.counter = 0
+
 	def ProcessEntry(self, tree, entry):
+
+		self.counter += 1
 
 		#######################################
 		# reset hist service at the beginning #
@@ -155,11 +183,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.histsvc.Reset()
 
-		#########################################################################################################
-		# Always remember: The miniNtuple is after certain selection! -- leadJet > 350GeV, subleadJet > 250 GeV #
-		#########################################################################################################
+		###################
+		# Data/MC Control #
+		###################
 
-		if not self._ForceDataMC:
+		if self._ForceDataMC is None:
 			_isMC = hasattr(tree, 'mcEventWeight')
 		else:
 			if self._ForceDataMC == "Data":
@@ -170,9 +198,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				print "Unable to recognize self._ForceDataMC",self._ForceDataMC
 				return
 
-		#################################################
-		# Things to do at the beginning (GRL, PRW etc.) #
-		#################################################
+		# We care about number of events before any cut ONLY IN MC
+		# in Data, just skim through it!
+		if not _isMC:
+			if not self.QuickSkimming(tree): return
 
 		####################
 		# Deal with weghts #
@@ -202,12 +231,46 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			PassedTriggerList.append("OR")
 		PassedTriggerList.append("All")
 
+		##################
+		# Quick Skimming #
+		##################
+
+		# For MC, this is before any cut (including skimming)
+		# For data, this is after skimming, before anything
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Initial", _isMC)
+		self.MakeCutflowPlot(tree, "Initial", _isMC)
+
+		if not self.QuickSkimming(tree): return
+
+		#########################################################
+		# From now on -- leadJet > 350GeV, subleadJet > 250 GeV #
+		#########################################################
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassBoostSkim", _isMC)
+		self.MakeCutflowPlot(tree, "PassBoostSkim", _isMC)
+
+		#################################################
+		# Things to do at the beginning (GRL, PRW etc.) #
+		#################################################
+		# PRW is moved to the beginning
+
+		#
+		# GRL
+		#
+
+		if not _isMC:
+			if self.GRL is None:
+				print "WARNING! GRL not setup for Data!"
+			else:
+				if not self.GRL.HasRunLumiBlock(tree.runNumber, tree.lumiBlock):
+					return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassGRL", _isMC)
+		self.MakeCutflowPlot(tree, "PassGRL", _isMC)
+
 		##
 		## Trigger Cut
 		##
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Initial", _isMC)
-		self.MakeCutflowPlot(tree, "Initial", _isMC)
 
 		if self._doTriggerCut:
 			if "OR" not in PassedTriggerList:
@@ -224,11 +287,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		##
 
 		LeadCaloJet = ROOT.TLorentzVector()
-		LeadCaloJet.SetPtEtaPhiM(tree.jet_ak10LCtrim_pt[0]/1000., tree.jet_ak10LCtrim_eta[0], tree.jet_ak10LCtrim_phi[0], tree.jet_ak10LCtrim_m[0]/1000.)
+		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
 		LeadCaloJet = ROOT.Particle(LeadCaloJet)
 
 		SubLeadCaloJet = ROOT.TLorentzVector()
-		SubLeadCaloJet.SetPtEtaPhiM(tree.jet_ak10LCtrim_pt[1]/1000., tree.jet_ak10LCtrim_eta[1], tree.jet_ak10LCtrim_phi[1], tree.jet_ak10LCtrim_m[1]/1000.)
+		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
 
 		self.histsvc.Set("LeadCaloJetPt", LeadCaloJet.p.Pt())
@@ -302,6 +365,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		############################
 		# Track-jet Reconstruction #
 		############################
+
+		# INFO: Starting from hh4b-v00-v01-01, track-jet selection has already been applied when producing miniNtuple. So it becomes redundant to do it here
 
 		AssocTrackJets_LeadCaloJet = []
 		for iTrackJet in range(tree.jet_ak2track_asso_pt[0].size()):
@@ -388,50 +453,39 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Now we play with b-tags #
 		###########################
 
-		numbtrackjet = 0
-		numbtrackjet_detail = [0, 0]   # [number of b-tags on leading calo-jet, number of b-tags on sub-leading calo-jet]
-		numbtrackjet_70 = 0
-		numbtrackjet_70_detail = [0, 0]
-		numbtrackjet_80 = 0
-		numbtrackjet_80_detail = [0, 0]
-		numbtrackjet_90 = 0
-		numbtrackjet_90_detail = [0, 0]
+		numbtrackjet_WP = defaultdict(lambda: 0)
+		numbtrackjet_WP_detail = defaultdict(lambda: [0,0])
 
 		for iCaloJet in range(2):
 			for iTrackJet in range( min(2, len(AssocTrackJets[iCaloJet])) ):
 				TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
 				MV2c20 = TrackJet.Double(ROOT.MomKey("MV2c20"))
 
-				if ( MV2c20 > self._MV2c20CutDict[self._TrackJetWP] ):
-					numbtrackjet += 1
-					numbtrackjet_detail[iCaloJet] += 1
-				if ( MV2c20 > self._MV2c20CutDict['70'] ):
-					numbtrackjet_70 += 1
-					numbtrackjet_70_detail[iCaloJet] += 1
-				if ( MV2c20 > self._MV2c20CutDict['80'] ):
-					numbtrackjet_80 += 1
-					numbtrackjet_80_detail[iCaloJet] += 1
-				if ( MV2c20 > self._MV2c20CutDict['90'] ):
-					numbtrackjet_90 += 1
-					numbtrackjet_90_detail[iCaloJet] += 1
+				for WP in self._TrackJetWP:
+					if MV2c20 > self._MV2c20CutDict[WP]:
+						numbtrackjet_WP[WP] += 1
+						numbtrackjet_WP_detail[WP][iCaloJet] += 1
 
 		# when we say nbtags == 2, we require they should be at the same side, otherwise, nbtags will be set as 211
-		if numbtrackjet == 2:
-			if (numbtrackjet_detail[0] != 2) and (numbtrackjet_detail[1] != 2): numbtrackjet = 211
-		if numbtrackjet_70 == 2:
-			if (numbtrackjet_70_detail[0] != 2) and (numbtrackjet_70_detail[1] != 2): numbtrackjet_70 = 211
-		if numbtrackjet_80 == 2:
-			if (numbtrackjet_80_detail[0] != 2) and (numbtrackjet_80_detail[1] != 2): numbtrackjet_80 = 211
-		if numbtrackjet_90 == 2:
-			if (numbtrackjet_90_detail[0] != 2) and (numbtrackjet_90_detail[1] != 2): numbtrackjet_90 = 211
+		for WP in self._TrackJetWP:
+			if numbtrackjet_WP[WP] == 2:
+				if (numbtrackjet_WP_detail[WP][0] != 2) and (numbtrackjet_WP_detail[WP][1] != 2): numbtrackjet_WP[WP] = 211
 
 		# a dictionary to record all b-tagging states
-		PassBtagDict = {
-		                 '70': {'Pass2b3b': (numbtrackjet_70 == 2) or (numbtrackjet_70 == 3), 'Pass4b': numbtrackjet_70 == 4, 'Pass3b': numbtrackjet_70 == 3, 'Pass2b': numbtrackjet_70 == 2, 'Pass3b4b': (numbtrackjet_70 == 3) or (numbtrackjet_70 == 4) },
-		                 '80': {'Pass2b3b': (numbtrackjet_80 == 2) or (numbtrackjet_80 == 3), 'Pass4b': numbtrackjet_80 == 4, 'Pass3b': numbtrackjet_80 == 3, 'Pass2b': numbtrackjet_80 == 2, 'Pass3b4b': (numbtrackjet_80 == 3) or (numbtrackjet_80 == 4) },
-		                 '90': {'Pass2b3b': (numbtrackjet_90 == 2) or (numbtrackjet_90 == 3), 'Pass4b': numbtrackjet_90 == 4, 'Pass3b': numbtrackjet_90 == 3, 'Pass2b': numbtrackjet_90 == 2, 'Pass3b4b': (numbtrackjet_90 == 3) or (numbtrackjet_90 == 4) },
-		               }
+		PassBtagDict = dict()
+		for WP in self._TrackJetWP:
+			numbtrackjet = numbtrackjet_WP[WP]
 
+			content = dict()
+			content['Pass2b3b'] = ((numbtrackjet == 2) or (numbtrackjet == 3))
+			content['Pass4b'] = (numbtrackjet == 4)
+			content['Pass3b'] = (numbtrackjet == 3)
+			content['Pass2b'] = (numbtrackjet == 2)
+			content['Pass3b4b'] = ((numbtrackjet == 3) or (numbtrackjet == 4))
+
+			PassBtagDict[WP] = content
+
+		# fill histogram for each ROI
 		for WP, PassBtags in PassBtagDict.items():
 			for PassBtagName, PassBtagDecision in PassBtags.items():
 				if PassBtagDecision:
@@ -465,10 +519,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 	def GetXsecWeight(self, tree):
 		if self._ApplyXsecWeight:
 			# first-time loading
-			if not self._XsecConfigObj:
+			if self._XsecConfigObj is None:
 				self._XsecConfigObj = ROOT.TEnv(self._XsectionConfig)
 
-				if not self._XsecConfigObj:
+				if self._XsecConfigObj is None:
 					print ': ERROR! Cannot open Xsec configuration file',self._XsectionConfig
 					sys.exit(0)
 			
@@ -518,7 +572,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountWeight_%s" % (cutName), tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
 	
 	def FillTrackJetVars(self, TrackJet, TrackJetName):
-		if not TrackJet:
+		if TrackJet is None:
 			return
 		else:
 			self.histsvc.Set(TrackJetName + "_Pt", TrackJet.p.Pt())
@@ -527,6 +581,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.Set(TrackJetName + "_M", TrackJet.p.M())
 			self.histsvc.Set(TrackJetName + "_E", TrackJet.p.E())
 			self.histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double(ROOT.MomKey("MV2c20")))
+
+	def QuickSkimming(self, tree):
+		if tree.hcand_boosted_n < 2:                 return False
+		if tree.hcand_boosted_pt[0]/1000. < 350.:    return False
+		
+		return True
+
 
 
 
