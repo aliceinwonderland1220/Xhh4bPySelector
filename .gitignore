@@ -5,3 +5,7 @@ lib/
 External/AutoHists/
 External/ProofAnaCore/
 External/PileupReweighting/
+External/GoodRunsLists/
+External/PMGCrossSectionTool/
+miniNtupleProcessor/output/
+setup_fix.sh

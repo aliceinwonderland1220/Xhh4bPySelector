@@ -44,6 +44,19 @@ compile() {
   rm -f GoodRunsLists
   ln -s ../GoodRunsLists/StandAlone GoodRunsLists
   cd ..
+
+  # PMGCrossSectionTool
+  echo "-----> Compiling PMGCrossSectionTool"
+  cp Makefile.PMGCrossSectionTool PMGCrossSectionTool/cmt/Makefile.StandAlone
+  cd PMGCrossSectionTool/cmt
+  make -f Makefile.StandAlone
+  cd ../StandAlone
+  ln -sf ../Root/TPMGCrossSectionToolCint_rdict.pcm
+  cd ../..
+  cd lib
+  rm -f PMGCrossSectionTool
+  ln -s ../PMGCrossSectionTool/StandAlone PMGCrossSectionTool
+  cd ..
 }
 
 clean() {
@@ -69,6 +82,13 @@ clean() {
   echo "-----> Cleaning GRL"
   cd GoodRunsLists/cmt
   make -f Makefile.Standalone clean
+  cd ..
+  rm -rf StandAlone
+  cd ..
+
+  echo "-----> Cleaning PMGCrossSectionTool"
+  cd PMGCrossSectionTool/cmt
+  make -f Makefile.StandAlone clean
   cd ..
   rm -rf StandAlone
   cd ..

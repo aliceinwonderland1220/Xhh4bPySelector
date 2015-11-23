@@ -11,6 +11,7 @@ dict_RSG_channelNumber_Mass = {
 	301494: ('c10', 900),
 	301495: ('c10', 1000),
 	301496: ('c10', 1100),
+	301497: ('c10', 1200),
 	301498: ('c10', 1300),
 	301499: ('c10', 1400),
 	301500: ('c10', 1500),
@@ -21,6 +22,20 @@ dict_RSG_channelNumber_Mass = {
 	301505: ('c10', 2500),
 	301506: ('c10', 2750),
 	301507: ('c10', 3000),
+}
+
+# run number range is all INCLUSIVE
+dict_Period_RunNumberList = {
+	"periodA": [266904, 267639],
+	"periodB": [267358, 267599],
+	"periodC": [270441, 272531],
+	"periodD": [276073, 276954],
+	"periodE": [278727, 279928],
+	"periodF": [279932, 280422],
+	"periodG": [280423, 281075],
+	"periodH": [281130, 281411],
+	"periodI": [281662, 282482],
+	"periodJ": [282625, 284484],
 }
 
 def SortVecIndex(inputlist, FromSmallToBig=False):
@@ -60,42 +75,62 @@ def GetRunNumberList(queryString):
 
 	RunNumberList = ""
 	for line in lines:
-		if 'CONTAINER' not in line:
+		#if 'CONTAINER' not in line:
+		if 'COLLECTION' not in line:
 			continue
 
 		start_index = line.find('data15_13TeV') + len('data15_13TeV') + 1
 		end_index = line.rfind('physics_Main')-1
 
-		RunNumberList += line[start_index:end_index]
+		segment = line[start_index:end_index]
+
+		if "period" in segment:
+			[runStart, runEnd] = dict_Period_RunNumberList[segment]
+			RunNumberList += ("%s-%s" % (runStart, runEnd))
+		else:
+			RunNumberList += segment
+
 		RunNumberList += ","
 
 	RunNumberList = RunNumberList[:-1]  # eat the last ","
 
-	return RunNumberList
+	RunNumberList_obj = RunNumberList.split(',')
+
+	if len(set(RunNumberList_obj)) != len(RunNumberList_obj):
+		print "WARNING: Some RunNumber appear more than once!"
+
+	RunNumberList_mergeobj = list(set(RunNumberList_obj))
+
+	return ','.join(RunNumberList_mergeobj)
 
 # merge metadata histogram 
 # Works on SLAC machine
+# format of hh4b_version should be something like hh4b-00-04-01
 def GetRSGMetaData(hh4b_version):
-	# path = "/atlas/local/zengq/XHHbbbb/miniNtuple/%s/mc15_13TeV/" % (hh4b_version)
-	path = "/atlas/local/zengq/XHHbbbb/miniNtuple/hh4b-v00-01-03/mc15_13TeV/"
+	hh4b_version_output = hh4b_version[:4]+"_v"+hh4b_version[5:]
+	hh4b_version_path = hh4b_version[:5]+'v'+hh4b_version[5:]
+
+	path = "/atlas/local/zengq/XHHbbbb/miniNtuple/%s/mc15_13TeV/" % (hh4b_version_path)
 	channelNumberList = dict_RSG_channelNumber_Mass.keys()
 
 	for channelNumber in channelNumberList:
-		outputFileName = "%s_RSG_%s_M%s_metadata.root" % (hh4b_version, dict_RSG_channelNumber_Mass[channelNumber][0], dict_RSG_channelNumber_Mass[channelNumber][1])
-		cmd = 'hadd -f %s %s' % ( outputFileName , path+"group.phys-exotics.mc15_13TeV."+str(channelNumber)+".*"+hh4b_version+"*metadata.root/*.root" )
+		outputFileName = "%s_RSG_%s_M%s_metadata.root" % (hh4b_version_output, dict_RSG_channelNumber_Mass[channelNumber][0], dict_RSG_channelNumber_Mass[channelNumber][1])
+		cmd = 'hadd -f %s %s' % ( outputFileName , path+"group.phys-exotics.mc15_13TeV."+str(channelNumber)+".*"+hh4b_version+"*metadata.root/*.root*" )
 		print cmd
 		os.system(cmd)
 
+# print out metadata of RSG
+# hh4b_version should be something like 'hh4b_v00-04-01'
 def ReadMetaData(hh4b_version):
 	import subprocess
-	fileList = subprocess.check_output(['ls', 'data'])
+	fileList = subprocess.check_output(['ls', 'data/'+hh4b_version])
 	fileList = fileList.split('\n')
 
 	for fileName in fileList:
 		if hh4b_version not in fileName: continue
 		if 'metadata.root' not in fileName: continue
 
-		f = ROOT.TFile('data/'+fileName)
+		f = ROOT.TFile('data/'+hh4b_version+'/'+fileName)
 		h = f.Get("MetaData_EventCount")
 
 		output = "%s : " % (fileName)

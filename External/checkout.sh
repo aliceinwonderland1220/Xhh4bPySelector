@@ -32,3 +32,6 @@ svn co svn+ssh://$user@svn.cern.ch/reps/atlasoff/PhysicsAnalysis/AnalysisCommon/
 
 # GRL
 svn co svn+ssh://$user@svn.cern.ch/reps/atlasoff/DataQuality/GoodRunsLists/tags/GoodRunsLists-00-01-21 GoodRunsLists
+
+# PMGCrossSectionTool -- get Xsection information
+svn co svn+ssh://$user@svn.cern.ch/reps/atlasphys-comm/Physics/Generators/PMGCrossSectionTool/trunk PMGCrossSectionTool

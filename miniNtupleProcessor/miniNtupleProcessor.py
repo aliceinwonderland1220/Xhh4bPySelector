@@ -34,6 +34,11 @@ if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/GoodRunsLists/l
 	sys.exit(0)
 ROOT.gROOT.ProcessLine('.include %s' % (os.environ['Xhh4bPySelector_dir']+"/External/GoodRunsLists"))
 
+# PMGCrossSectionTool #
+if(gSystem.Load(os.environ['Xhh4bPySelector_dir']+"/External/lib/PMGCrossSectionTool/libPMGCrossSectionTool.so") != 0):
+	print "ERROR! Unable to load PMGCrossSectionTool!"
+	sys.exit(0)
+
 print "Finish loading libraries!"
 
 class miniNtupleProcessor(PySelectorBase.PySelectorBase):
@@ -43,7 +48,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		####################
 
 		self.histfile = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/test.root"       # use absolute path, and all output will be put under output folder
-		self.printInterval = 1000
+		self.printInterval = 1000000000 #1000
 		# generate list of variables that will actuall be used by parsing current file
 		print ": URL of file to be parsed for varable activation"
 		parseFileName = __file__
@@ -70,19 +75,24 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			"85": -0.8433,
 		}
 
-		self._TriggerList = ["HLT_j70_btight_3j70", "HLT_j100_2j55_bmedium", "HLT_ht700", "HLT_4j85", "HLT_j360"]   # list of triggers to be combined in OR
+		self._TriggerList = ["HLT_j360_a10r_L1J100", "HLT_4j85"]
 		self._doTriggerCut = True
 
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
-		self._TrackJetWP = ["70", "77", "85"]    # list of WP to consider
+		self._TrackJetWP = ["77"]                # list of WP to consider
+
+		self._doMuonCorrection = True
+		self._MuonPtCut = 4.
+		self._MuonEtaCut = 2.5
+		self._MuonQualityCut = "Tight"
+		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-01-03_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_Xsection.config"
 
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v70-pro19-04_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
-		self._Lumi = 1.41126        # unit to be compatible with Xsection.config
-		                            # Number for hh4b-v00-v01-03
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v71-pro19-06_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
+		self._Lumi = 3.22457          # Number for hh4b-v00-v04-01 -- not taken from GRL, bu re-calculated again with available dataset
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
 
@@ -92,6 +102,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._doPRW = False
 		self._PRWConfigFile = ""
 		self._PRWLumiCalcFile = ""
+
+		# PMGCrossSectionTool
+		#
+
+		self._PMGCrossSectionFiles = [
+		                              "list_Xsec_TTbar_Download.txt",
+		                              "list_Xsec_Exotics_Other_Download.txt",
+		                            ]
+		self._PMGCrossSectionTool = None
+
 
 		#####################
 		## Private Objects ##
@@ -109,23 +129,27 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._EvtWeight = array.array('d', [1.])
 
-		self.histsvc.Book("ChannelNumber_DiJetMass", "ChannelNumber", "DiJetMass", self._EvtWeight, 21, 301486.5, 301507.5, 50, 0, 5000)
+		self.histsvc.Book("ChannelNumber_DiJetMass", "ChannelNumber", "DiJetMass", self._EvtWeight, 21, 301486.5, 301507.5, 100, 0, 5000)
 
-		self.histsvc.Book("LeadCaloJetPt", "LeadCaloJetPt", self._EvtWeight, 12, 300, 900)
-		self.histsvc.Book("LeadCaloJetEta", "LeadCaloJetEta", self._EvtWeight, 25, -2.5, 2.5)
+		self.histsvc.Book("LeadCaloJetPt", "LeadCaloJetPt", self._EvtWeight, 60, 100, 1300)
+		self.histsvc.Book("LeadCaloJetEta", "LeadCaloJetEta", self._EvtWeight, 24, -3.0, 3.0)
 		self.histsvc.Book("LeadCaloJetPhi", "LeadCaloJetPhi", self._EvtWeight, 35, -3.5, 3.5)
 		self.histsvc.Book("LeadCaloJetM", "LeadCaloJetM", self._EvtWeight, 100, 0, 1000)
 
-		self.histsvc.Book("SubLeadCaloJetPt", "SubLeadCaloJetPt", self._EvtWeight, 12, 300, 900)
-		self.histsvc.Book("SubLeadCaloJetEta", "SubLeadCaloJetEta", self._EvtWeight, 25, -2.5, 2.5)
+		self.histsvc.Book("SubLeadCaloJetPt", "SubLeadCaloJetPt", self._EvtWeight, 60, 100, 1300)
+		self.histsvc.Book("SubLeadCaloJetEta", "SubLeadCaloJetEta", self._EvtWeight, 24, -3.0, 3.0)
 		self.histsvc.Book("SubLeadCaloJetPhi", "SubLeadCaloJetPhi", self._EvtWeight, 35, -3.5, 3.5)
 		self.histsvc.Book("SubLeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 1000)
 
-		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 20, 0, 1000, 20, 0, 1000)
+		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 5000, 100, 0, 5000)
+		# self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM_fine", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 1000, 0, 5000, 1000, 0, 5000)
 
 		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
-		#self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 50, 0, 5000)
+		self.histsvc.Book("DiJetDeltaR", "DiJetDeltaR", self._EvtWeight, 100, 0, 5)
 		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 100, 0, 5000)
+
+		self.histsvc.Book("dRjj_LeadCaloJet", "dRjj_LeadCaloJet", self._EvtWeight, 75, 0, 1.5)
+		self.histsvc.Book("dRjj_SubLeadCaloJet", "dRjj_SubLeadCaloJet", self._EvtWeight, 75, 0, 1.5)
 
 		self.TrackJetNameList = [
 		                         "LeadTrackJet_LeadCaloJet",
@@ -135,11 +159,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                        ]
 
 		for TrackJetName in self.TrackJetNameList:
-			self.histsvc.Book(TrackJetName + "_Pt", TrackJetName + "_Pt", self._EvtWeight, 10, 0, 500)
-			self.histsvc.Book(TrackJetName + "_Eta", TrackJetName + "_Eta", self._EvtWeight, 25, -2.5, 2.5)
+			self.histsvc.Book(TrackJetName + "_Pt", TrackJetName + "_Pt", self._EvtWeight, 50, 0, 500)
+			self.histsvc.Book(TrackJetName + "_Eta", TrackJetName + "_Eta", self._EvtWeight, 24, -3.0, 3.0)
 			self.histsvc.Book(TrackJetName + "_Phi", TrackJetName + "_Phi", self._EvtWeight, 35, -3.5, 3.5)
-			self.histsvc.Book(TrackJetName + "_M", TrackJetName + "_M", self._EvtWeight, 20, 0, 1000)
-			self.histsvc.Book(TrackJetName + "_E", TrackJetName + "_E", self._EvtWeight, 20, 0, 1000)
+			self.histsvc.Book(TrackJetName + "_M", TrackJetName + "_M", self._EvtWeight, 100, 0, 1000)
+			self.histsvc.Book(TrackJetName + "_E", TrackJetName + "_E", self._EvtWeight, 100, 0, 1000)
 			self.histsvc.Book(TrackJetName + "_MV2c20", TrackJetName + "_MV2c20", self._EvtWeight, 220, -1.1, 1.1)
 
 		###############################
@@ -173,9 +197,26 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.counter = 0
 
+		self.specialCount = 0
+
+		#
+		# PMGCrossSectionTool
+		#
+
+		self._PMGCrossSectionTool = ROOT.SampleInfo()
+		PMGFileNameVector = ROOT.vector('string')()
+		for fileName in self._PMGCrossSectionFiles:
+			PMGFileNameVector.push_back( os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + fileName )
+		if not self._PMGCrossSectionTool.readInfosFromFiles(PMGFileNameVector):
+			print "WARNING! Problem in reading Xsection info!"
+
+
 	def ProcessEntry(self, tree, entry):
 
 		self.counter += 1
+
+		# if tree.eventNumber != 59693:
+		# 	return
 
 		#######################################
 		# reset hist service at the beginning #
@@ -198,11 +239,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				print "Unable to recognize self._ForceDataMC",self._ForceDataMC
 				return
 
-		# We care about number of events before any cut ONLY IN MC
-		# in Data, just skim through it!
-		if not _isMC:
-			if not self.QuickSkimming(tree): return
-
 		####################
 		# Deal with weghts #
 		####################
@@ -222,6 +258,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		if _isMC: self.histsvc.Set("ChannelNumber", tree.mcChannelNumber)
 
+		# if tree.nmuon < 2:
+		# 	return
+
 		############
 		# Triggers #
 		############
@@ -231,32 +270,22 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			PassedTriggerList.append("OR")
 		PassedTriggerList.append("All")
 
-		##################
-		# Quick Skimming #
-		##################
-
-		# For MC, this is before any cut (including skimming)
-		# For data, this is after skimming, before anything
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Initial", _isMC)
 		self.MakeCutflowPlot(tree, "Initial", _isMC)
 
-		if not self.QuickSkimming(tree): return
-
-		#########################################################
-		# From now on -- leadJet > 350GeV, subleadJet > 250 GeV #
-		#########################################################
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassBoostSkim", _isMC)
-		self.MakeCutflowPlot(tree, "PassBoostSkim", _isMC)
-
-		#################################################
-		# Things to do at the beginning (GRL, PRW etc.) #
-		#################################################
-		# PRW is moved to the beginning
-
 		#
-		# GRL
+		# Trigger Cut
 		#
+
+		if self._doTriggerCut:
+			if "OR" not in PassedTriggerList:
+				return
+
+		self.MakeCutflowPlot(tree, "PassTrigger", _isMC)
+
+		#######
+		# GRL #
+		#######
 
 		if not _isMC:
 			if self.GRL is None:
@@ -268,23 +297,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassGRL", _isMC)
 		self.MakeCutflowPlot(tree, "PassGRL", _isMC)
 
-		##
-		## Trigger Cut
-		##
-
-		if self._doTriggerCut:
-			if "OR" not in PassedTriggerList:
-				return
-
-		self.MakeCutflowPlot(tree, "PassTrigger", _isMC)
-
 		#####################
 		# Calo-jet Business #
 		#####################
 
-		##
-		## calo-jets Reconstruction
-		##
+		#
+		# calo-jet multiplicity cut
+		#
+
+		if tree.hcand_boosted_n < 2: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloJetMultiCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassCaloJetMultiCut", _isMC)
+
+
+		#
+		# calo-jets Reconstruction
+		#
 
 		LeadCaloJet = ROOT.TLorentzVector()
 		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
@@ -293,6 +322,207 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
+
+		CaloJetList = [LeadCaloJet, SubLeadCaloJet]
+
+		############################
+		# Track-jet Reconstruction #
+		############################
+
+		# INFO: Starting from hh4b-v00-v01-01, track-jet selection has already been applied when producing miniNtuple. So it becomes redundant to do it here
+
+		AssocTrackJets_LeadCaloJet = []
+		for iTrackJet in range(tree.jet_ak2track_asso_pt[0].size()):
+			TrackJet = ROOT.TLorentzVector()
+			TrackJet.SetPtEtaPhiM(tree.jet_ak2track_asso_pt[0][iTrackJet]/1000., tree.jet_ak2track_asso_eta[0][iTrackJet], tree.jet_ak2track_asso_phi[0][iTrackJet], tree.jet_ak2track_asso_m[0][iTrackJet]/1000.)
+
+			# if TrackJet.Pt() < self._TrackJetPtCut: continue
+			# if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
+
+			TrackJet = ROOT.Particle(TrackJet)
+			TrackJet.Set("MV2c20", tree.jet_ak2track_asso_MV2c20[0][iTrackJet])
+
+			AssocTrackJets_LeadCaloJet.append( TrackJet )
+
+		AssocTrackJets_SubLeadCaloJet = []
+		for iTrackJet in range(tree.jet_ak2track_asso_pt[1].size()):
+			TrackJet = ROOT.TLorentzVector()
+			TrackJet.SetPtEtaPhiM(tree.jet_ak2track_asso_pt[1][iTrackJet]/1000., tree.jet_ak2track_asso_eta[1][iTrackJet], tree.jet_ak2track_asso_phi[1][iTrackJet], tree.jet_ak2track_asso_m[1][iTrackJet]/1000.)
+
+			# if TrackJet.Pt() < self._TrackJetPtCut: continue
+			# if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
+
+			TrackJet = ROOT.Particle(TrackJet)
+			TrackJet.Set("MV2c20", tree.jet_ak2track_asso_MV2c20[1][iTrackJet])
+
+			AssocTrackJets_SubLeadCaloJet.append( TrackJet )
+
+		AssocTrackJetList = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet  ]
+		AssocTrackJetFlattenList = AssocTrackJets_LeadCaloJet + AssocTrackJets_SubLeadCaloJet
+
+		##################
+		# Add Back Muons #
+		##################
+
+		Muons = []
+		for iMuon in range(tree.nmuon):
+			Muon = ROOT.TLorentzVector()
+			Muon.SetPtEtaPhiM(tree.muon_pt[iMuon], tree.muon_eta[iMuon], tree.muon_phi[iMuon], tree.muon_m[iMuon])
+			Muon = ROOT.Particle(Muon)
+
+			Muons.append( Muon )
+
+			if self._doMuonCorrection:
+				if Muon.p.Pt() < self._MuonPtCut:         continue
+				if abs(Muon.p.Eta()) > self._MuonEtaCut:  continue
+				if not self.PassMuonQualityCut(tree, iMuon): continue
+
+				MatchTrackJet = None
+				MatchTrackJetDR = 9e9
+				for TrackJet in AssocTrackJetFlattenList:
+					dR = Muon.p.DeltaR(TrackJet.p)
+
+					if dR > 0.2: continue
+					if TrackJet.Double("MV2c20") < self._MV2c20CutDict[self._MuonAddBackBtagWP]: continue
+
+					if dR < MatchTrackJetDR:
+						MatchTrackJetDR = dR
+						MatchTrackJet = TrackJet
+
+				if MatchTrackJet is not None:
+					if MatchTrackJet.Exists("MuonAssocIndex"):
+						oldDR = MatchTrackJet.Double("MuonAssocDR")
+
+						if MatchTrackJetDR < oldDR:
+							MatchTrackJet.Set("MuonAssocIndex", iMuon)
+							MatchTrackJet.Set("MuonAssocDR", MatchTrackJetDR)
+					else:
+						MatchTrackJet.Set("MuonAssocIndex", iMuon)
+						MatchTrackJet.Set("MuonAssocDR", MatchTrackJetDR)
+
+		# Muons = []
+		# for iMuon in range(tree.nmuon):
+		# 	Muon = ROOT.TLorentzVector()
+		# 	Muon.SetPtEtaPhiM(tree.muon_pt[iMuon], tree.muon_eta[iMuon], tree.muon_phi[iMuon], tree.muon_m[iMuon])
+		# 	Muon = ROOT.Particle(Muon)
+
+		# 	Muons.append( Muon )
+
+		# for TrackJet in AssocTrackJetFlattenList:
+		# 	if TrackJet.Double("MV2c20") < self._MV2c20CutDict[self._MuonAddBackBtagWP]: continue
+
+		# 	MatchMuonIndex = -1
+		# 	MatchMuonDR = 9e9
+
+		# 	for iMuon, Muon in enumerate(Muons):
+		# 		if Muon.p.Pt() < self._MuonPtCut: continue
+		# 		if abs(Muon.p.Eta()) > self._MuonEtaCut: continue
+		# 		if not self.PassMuonQualityCut(tree, iMuon): continue
+
+		# 		dR = Muon.p.DeltaR(TrackJet.p)
+
+		# 		if dR >= 0.2: continue
+
+		# 		if dR < MatchMuonDR:
+		# 			MatchMuonDR = dR
+		# 			MatchMuonIndex = iMuon
+
+		# 	if MatchMuonIndex != -1:
+		# 		TrackJet.Set("MuonAssocIndex", MatchMuonIndex)
+		# 		TrackJet.Set("MatchMuonDR", MatchMuonDR)
+
+		for iCaloJet, CaloJet in enumerate(CaloJetList):
+			sumMuonCorr = ROOT.TLorentzVector()
+
+			# print "CaloJet %i before correction: pT %s" % (iCaloJet, CaloJet.p.Pt())
+
+			for TrackJet in AssocTrackJetList[iCaloJet]:
+				if TrackJet.Exists("MuonAssocIndex"):
+					sumMuonCorr += (Muons[TrackJet.Int("MuonAssocIndex")].p)
+					# print "Index of muon to be associated:",TrackJet.Int("MuonAssocIndex")
+
+			CaloJet.p = CaloJet.p + sumMuonCorr
+
+			# print "CaloJet %i after correction: pT %s" % (iCaloJet, CaloJet.p.Pt())
+
+			# print "-------------"
+
+		# From now on, all calo-jet has muon correction
+
+		#############################
+		# Trackjet Multiplicity Cut #
+		#############################
+
+		TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
+
+		Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
+		Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
+
+		# if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
+		# 	return
+
+		if (not Pass4GoodTrackJet):
+			return
+
+		# just an alert here ... 
+		if Pass4GoodTrackJet and Pass3GoodTrackJet:
+			print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
+			sys.exit()
+			return
+
+		if Pass4GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
+		if Pass3GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
+
+		##########################
+		# Calo Jet Kinematic Cut #
+		##########################
+
+		# reminder: the baseline 250 GeV and 2.0 eta cut is on calo-jet with NO muon correction
+
+		#
+		# Re-apply kineamtics cut on corrected calo-jets
+		#
+
+		if LeadCaloJet.p.Pt() < 350.:      return
+		if abs(LeadCaloJet.p.Eta()) > 2.0: return
+
+		if SubLeadCaloJet.p.Pt() < 250.:      return
+		if abs(SubLeadCaloJet.p.Eta()) > 2.0: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloKinematicsCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassCaloKinematicsCut", _isMC)
+
+		# print tree.eventNumber,self.specialCount
+		# self.specialCount += 1
+
+		# print "-------------------------------"
+
+		# if tree.eventNumber > 59693:
+		# 	return
+
+		# return
+
+		#
+		# calo-jet dEta cuts
+		# 
+
+		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
+
+		if not PassdEtaCut:
+			return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
+
+		####################################################################################################################
+
+		###########################
+		# Fill Calo-Jet Kinematic #
+		###########################
 
 		self.histsvc.Set("LeadCaloJetPt", LeadCaloJet.p.Pt())
 		self.histsvc.Set("LeadCaloJetEta", LeadCaloJet.p.Eta())
@@ -305,45 +535,19 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Set("SubLeadCaloJetM", SubLeadCaloJet.p.M())
 
 		self.histsvc.Set("DiJetDeltaPhi", LeadCaloJet.p.DeltaPhi(SubLeadCaloJet.p))
+		self.histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 		self.histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
 
-		##
-		## calo-jet dEta cuts
-		## 
+		#############################
+		# Fill Track-Jet Kinematics #
+		#############################
 
-		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
+		if len(AssocTrackJets_LeadCaloJet) == 2:
+			self.histsvc.Set("dRjj_LeadCaloJet", AssocTrackJets_LeadCaloJet[0].p.DeltaR(AssocTrackJets_LeadCaloJet[1].p))
+		if len(AssocTrackJets_SubLeadCaloJet) == 2:
+			self.histsvc.Set("dRjj_SubLeadCaloJet", AssocTrackJets_SubLeadCaloJet[0].p.DeltaR(AssocTrackJets_SubLeadCaloJet[1].p))
 
-		if not PassdEtaCut:
-			return
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
-		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
-
-		# #####################################################
-		# # Reference Histogram with Standard Cuts in N-tuple #
-		# #####################################################
-
-		# if tree.Pass4Btag:
-		# 	if tree.PassSignalMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass4b70_SRMass")
-		# 	if tree.PassControlMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass4b70_CRMass")
-		# 	if tree.PassSidebandMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass4b70_SBMass")
-		# if tree.Pass3Btag or tree.Pass2Btag:
-		# 	if tree.PassSignalMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass2b3b70_SRMass")
-		# 	if tree.PassControlMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass2b3b70_CRMass")
-		# 	if tree.PassSidebandMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass2b3b70_SBMass")
-		# if tree.Pass3Btag or tree.Pass4Btag:
-		# 	if tree.PassSignalMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass3b4b70_SRMass")
-		# 	if tree.PassControlMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass3b4b70_CRMass")
-		# 	if tree.PassSidebandMass:
-		# 		self.histsvc.MakeHists("GoodEvent", "_CrossCheckPass3b4b70_SBMass")
+		#####################################################################################################################
 
 		###############
 		# mass region #
@@ -362,62 +566,30 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		if PassSRMass:
 			self.MakeCutflowPlot(tree, "PassdEtaCutPassSRMass", _isMC)
 
-		############################
-		# Track-jet Reconstruction #
-		############################
+		# #############################
+		# # Trackjet Multiplicity Cut #
+		# #############################
 
-		# INFO: Starting from hh4b-v00-v01-01, track-jet selection has already been applied when producing miniNtuple. So it becomes redundant to do it here
+		# TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
 
-		AssocTrackJets_LeadCaloJet = []
-		for iTrackJet in range(tree.jet_ak2track_asso_pt[0].size()):
-			TrackJet = ROOT.TLorentzVector()
-			TrackJet.SetPtEtaPhiM(tree.jet_ak2track_asso_pt[0][iTrackJet]/1000., tree.jet_ak2track_asso_eta[0][iTrackJet], tree.jet_ak2track_asso_phi[0][iTrackJet], tree.jet_ak2track_asso_m[0][iTrackJet]/1000.)
+		# Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
+		# Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
 
-			if TrackJet.Pt() < self._TrackJetPtCut: continue
-			if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
+		# if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
+		# 	return
 
-			TrackJet = ROOT.Particle(TrackJet)
-			TrackJet.Set(ROOT.MomKey("MV2c20"), tree.jet_ak2track_asso_MV2c20[0][iTrackJet])
+		# # just an alert here ... 
+		# if Pass4GoodTrackJet and Pass3GoodTrackJet:
+		# 	print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
+		# 	sys.exit()
+		# 	return
 
-			AssocTrackJets_LeadCaloJet.append( TrackJet )
-
-		AssocTrackJets_SubLeadCaloJet = []
-		for iTrackJet in range(tree.jet_ak2track_asso_pt[1].size()):
-			TrackJet = ROOT.TLorentzVector()
-			TrackJet.SetPtEtaPhiM(tree.jet_ak2track_asso_pt[1][iTrackJet]/1000., tree.jet_ak2track_asso_eta[1][iTrackJet], tree.jet_ak2track_asso_phi[1][iTrackJet], tree.jet_ak2track_asso_m[1][iTrackJet]/1000.)
-
-			if TrackJet.Pt() < self._TrackJetPtCut: continue
-			if abs(TrackJet.Eta()) > self._TrackJetEtaCut: continue
-
-			TrackJet = ROOT.Particle(TrackJet)
-			TrackJet.Set(ROOT.MomKey("MV2c20"), tree.jet_ak2track_asso_MV2c20[1][iTrackJet])
-
-			AssocTrackJets_SubLeadCaloJet.append( TrackJet )
-
-		##
-		## Track-jet multiplicity
-		##
-
-		TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
-
-		Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
-		Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
-
-		if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
-			return
-
-		# just an alert here ... 
-		if Pass4GoodTrackJet and Pass3GoodTrackJet:
-			print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
-			sys.exit()
-			return
-
-		if Pass4GoodTrackJet:
-			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
-			self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
-		if Pass3GoodTrackJet:
-			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
-			self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
+		# if Pass4GoodTrackJet:
+		# 	for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
+		# 	self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
+		# if Pass3GoodTrackJet:
+		# 	for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
+		# 	self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
 
 		AssocTrackJets = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet ]
 
@@ -459,7 +631,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for iCaloJet in range(2):
 			for iTrackJet in range( min(2, len(AssocTrackJets[iCaloJet])) ):
 				TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
-				MV2c20 = TrackJet.Double(ROOT.MomKey("MV2c20"))
+				MV2c20 = TrackJet.Double("MV2c20")
 
 				for WP in self._TrackJetWP:
 					if MV2c20 > self._MV2c20CutDict[WP]:
@@ -482,6 +654,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			content['Pass3b'] = (numbtrackjet == 3)
 			content['Pass2b'] = (numbtrackjet == 2)
 			content['Pass3b4b'] = ((numbtrackjet == 3) or (numbtrackjet == 4))
+			content['Pass211b'] = (numbtrackjet == 211)
 
 			PassBtagDict[WP] = content
 
@@ -527,10 +700,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					sys.exit(0)
 			
 			mcChannelNumber = tree.mcChannelNumber
+			
 			xsec = self._XsecConfigObj.GetValue("xsec_%i" % (mcChannelNumber), 1.)
 			eff  = self._XsecConfigObj.GetValue("eff_%i" % (mcChannelNumber), 1.)
 			k    = self._XsecConfigObj.GetValue("k_%i" % (mcChannelNumber), 1.)
 			n    = self._XsecConfigObj.GetValue("n_%i" % (mcChannelNumber), 1.)
+
+			# use the PMGCrossTool to figure out xsec, eff and k automatically
+			# Unit conversion: pb -> fb
 
 			return 1.0*self._Lumi*xsec*k*eff/n
 
@@ -538,7 +715,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			return 1.
 
 	def GetDiJetMassWindow(self, j1, j2):
-		Hlead = 125.
+		Hlead = 124.
 		HSubl = 115.
 
 		mass_lead = j1.p.M()
@@ -580,13 +757,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.Set(TrackJetName + "_Phi", TrackJet.p.Phi())
 			self.histsvc.Set(TrackJetName + "_M", TrackJet.p.M())
 			self.histsvc.Set(TrackJetName + "_E", TrackJet.p.E())
-			self.histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double(ROOT.MomKey("MV2c20")))
+			self.histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double("MV2c20"))
 
-	def QuickSkimming(self, tree):
-		if tree.hcand_boosted_n < 2:                 return False
-		if tree.hcand_boosted_pt[0]/1000. < 350.:    return False
-		
-		return True
+	def PassMuonQualityCut(self, tree, iMuon):
+		if self._MuonQualityCut == "Tight":
+			return tree.muon_isTight[iMuon] == 1
+		elif self._MuonQualityCut == "Medium":
+			return (tree.muon_isMedium[iMuon] == 1) or (tree.muon_isTight[iMuon] == 1)
+		elif self._MuonQualityCut == "Loose":
+			return (tree.muon_isLoose[iMuon] == 1) or (tree.muon_isMedium[iMuon] == 1) or (tree.muon_isTight[iMuon] == 1)
+		else:
+			print "Unrecognized muon quality cut",self._MuonQualityCut
+			return False
 
 
 
