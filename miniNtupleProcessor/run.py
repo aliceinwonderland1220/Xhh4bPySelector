@@ -6,10 +6,13 @@ import os
 
 treename = "XhhMiniNtuple"
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_data.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_data.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_ttbar.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_RSG_c10.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1000.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1500.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2000.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2500.txt"
 
 def loadDataset(treename, filename):
 	dataset = ROOT.TDSet('TTree', treename)
@@ -64,4 +67,4 @@ def runProof(address, nworkers=0):
 
 if __name__ == "__main__":
 	# runProof("lite://", 1)
-	runProof("zengq@atlint04.slac.stanford.edu:21001", 50)
+	runProof("zengq@atlint04.slac.stanford.edu:21001")

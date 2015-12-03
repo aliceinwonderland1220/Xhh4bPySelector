@@ -48,7 +48,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		####################
 
 		self.histfile = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/test.root"       # use absolute path, and all output will be put under output folder
-		self.printInterval = 1000000000 #1000
+		self.printInterval = 1000
 		# generate list of variables that will actuall be used by parsing current file
 		print ": URL of file to be parsed for varable activation"
 		parseFileName = __file__
@@ -91,8 +91,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._ApplyXsecWeight = True
 		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_Xsection.config"
 
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v71-pro19-06_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
-		self._Lumi = 3.22457          # Number for hh4b-v00-v04-01 -- not taken from GRL, bu re-calculated again with available dataset
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
+		self._Lumi = 3.19867          # Number for hh4b-v00-v04-01 -- not taken from GRL, bu re-calculated again with available dataset
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
 
@@ -142,9 +142,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Book("SubLeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 1000)
 
 		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 5000, 100, 0, 5000)
-		# self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM_fine", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 1000, 0, 5000, 1000, 0, 5000)
+		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM_fine", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 1000, 0, 1000, 1000, 0, 1000)
 
 		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
+		self.histsvc.Book("DiJetDeltaEta", "DiJetDeltaEta", self._EvtWeight, 80, -4, 4)
 		self.histsvc.Book("DiJetDeltaR", "DiJetDeltaR", self._EvtWeight, 100, 0, 5)
 		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 100, 0, 5000)
 
@@ -215,9 +216,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.counter += 1
 
-		# if tree.eventNumber != 59693:
-		# 	return
-
 		#######################################
 		# reset hist service at the beginning #
 		#######################################
@@ -258,8 +256,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		if _isMC: self.histsvc.Set("ChannelNumber", tree.mcChannelNumber)
 
-		# if tree.nmuon < 2:
-		# 	return
 
 		############
 		# Triggers #
@@ -400,82 +396,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 						MatchTrackJet.Set("MuonAssocIndex", iMuon)
 						MatchTrackJet.Set("MuonAssocDR", MatchTrackJetDR)
 
-		# Muons = []
-		# for iMuon in range(tree.nmuon):
-		# 	Muon = ROOT.TLorentzVector()
-		# 	Muon.SetPtEtaPhiM(tree.muon_pt[iMuon], tree.muon_eta[iMuon], tree.muon_phi[iMuon], tree.muon_m[iMuon])
-		# 	Muon = ROOT.Particle(Muon)
-
-		# 	Muons.append( Muon )
-
-		# for TrackJet in AssocTrackJetFlattenList:
-		# 	if TrackJet.Double("MV2c20") < self._MV2c20CutDict[self._MuonAddBackBtagWP]: continue
-
-		# 	MatchMuonIndex = -1
-		# 	MatchMuonDR = 9e9
-
-		# 	for iMuon, Muon in enumerate(Muons):
-		# 		if Muon.p.Pt() < self._MuonPtCut: continue
-		# 		if abs(Muon.p.Eta()) > self._MuonEtaCut: continue
-		# 		if not self.PassMuonQualityCut(tree, iMuon): continue
-
-		# 		dR = Muon.p.DeltaR(TrackJet.p)
-
-		# 		if dR >= 0.2: continue
-
-		# 		if dR < MatchMuonDR:
-		# 			MatchMuonDR = dR
-		# 			MatchMuonIndex = iMuon
-
-		# 	if MatchMuonIndex != -1:
-		# 		TrackJet.Set("MuonAssocIndex", MatchMuonIndex)
-		# 		TrackJet.Set("MatchMuonDR", MatchMuonDR)
-
 		for iCaloJet, CaloJet in enumerate(CaloJetList):
 			sumMuonCorr = ROOT.TLorentzVector()
-
-			# print "CaloJet %i before correction: pT %s" % (iCaloJet, CaloJet.p.Pt())
 
 			for TrackJet in AssocTrackJetList[iCaloJet]:
 				if TrackJet.Exists("MuonAssocIndex"):
 					sumMuonCorr += (Muons[TrackJet.Int("MuonAssocIndex")].p)
-					# print "Index of muon to be associated:",TrackJet.Int("MuonAssocIndex")
 
 			CaloJet.p = CaloJet.p + sumMuonCorr
 
-			# print "CaloJet %i after correction: pT %s" % (iCaloJet, CaloJet.p.Pt())
-
-			# print "-------------"
-
 		# From now on, all calo-jet has muon correction
-
-		#############################
-		# Trackjet Multiplicity Cut #
-		#############################
-
-		TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
-
-		Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
-		Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
-
-		# if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
-		# 	return
-
-		if (not Pass4GoodTrackJet):
-			return
-
-		# just an alert here ... 
-		if Pass4GoodTrackJet and Pass3GoodTrackJet:
-			print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
-			sys.exit()
-			return
-
-		if Pass4GoodTrackJet:
-			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
-			self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
-		if Pass3GoodTrackJet:
-			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
-			self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
 
 		##########################
 		# Calo Jet Kinematic Cut #
@@ -495,16 +425,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloKinematicsCut", _isMC)
 		self.MakeCutflowPlot(tree, "PassCaloKinematicsCut", _isMC)
-
-		# print tree.eventNumber,self.specialCount
-		# self.specialCount += 1
-
-		# print "-------------------------------"
-
-		# if tree.eventNumber > 59693:
-		# 	return
-
-		# return
 
 		#
 		# calo-jet dEta cuts
@@ -535,6 +455,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Set("SubLeadCaloJetM", SubLeadCaloJet.p.M())
 
 		self.histsvc.Set("DiJetDeltaPhi", LeadCaloJet.p.DeltaPhi(SubLeadCaloJet.p))
+		self.histsvc.Set("DiJetDeltaEta", LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta())
 		self.histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 		self.histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
 
@@ -566,30 +487,30 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		if PassSRMass:
 			self.MakeCutflowPlot(tree, "PassdEtaCutPassSRMass", _isMC)
 
-		# #############################
-		# # Trackjet Multiplicity Cut #
-		# #############################
+		#############################
+		# Trackjet Multiplicity Cut #
+		#############################
 
-		# TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
+		TrackJetMultiPattern = [ len(AssocTrackJets_LeadCaloJet), len(AssocTrackJets_SubLeadCaloJet) ]
 
-		# Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
-		# Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
+		Pass4GoodTrackJet = ((TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] >= 2))
+		Pass3GoodTrackJet = ( ( (TrackJetMultiPattern[0] >= 2) and (TrackJetMultiPattern[1] == 1) ) or ( (TrackJetMultiPattern[0] == 1) and (TrackJetMultiPattern[1] >= 2) ) )
 
-		# if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
-		# 	return
+		if (not Pass4GoodTrackJet) and (not Pass3GoodTrackJet):
+			return
 
-		# # just an alert here ... 
-		# if Pass4GoodTrackJet and Pass3GoodTrackJet:
-		# 	print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
-		# 	sys.exit()
-		# 	return
+		# just an alert here ... 
+		if Pass4GoodTrackJet and Pass3GoodTrackJet:
+			print "ERROR! Pass4GoodTrackJet and Pass3GoodTrackJet should be exclusive to each other!"
+			sys.exit()
+			return
 
-		# if Pass4GoodTrackJet:
-		# 	for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
-		# 	self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
-		# if Pass3GoodTrackJet:
-		# 	for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
-		# 	self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
+		if Pass4GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass4GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass4GoodTrackJet", _isMC)
+		if Pass3GoodTrackJet:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "Pass3GoodTrackJet", _isMC)
+			self.MakeCutflowPlot(tree, "Pass3GoodTrackJet", _isMC)
 
 		AssocTrackJets = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet ]
 
@@ -726,12 +647,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			return 2
 
 		Xhh = ROOT.TMath.Sqrt( pow( (mass_lead - Hlead)/(0.1*mass_lead), 2 ) + pow( (mass_sublead - HSubl)/(0.1*mass_sublead), 2 ) )
+		CircleRadius = ROOT.TMath.Sqrt( pow(mass_lead - Hlead, 2) + pow(mass_sublead - HSubl, 2) )
 
 		# always exclusive to each other
 		# same as XhhCommon cutflow
 		if Xhh < 1.6:
 			return 0
-		elif ( (mass_lead > 95.) and (mass_lead < 160.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):
+		elif ( (mass_lead > 95.) and (mass_lead < 160.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):        # Run 1 setting
+		# elif ( (mass_lead > 95.) and (mass_lead < 155.) and (mass_sublead > 80.) and (mass_sublead < 155.) ):        # Run 2 experiment: Box (95, 80, 60, 75)
+		# elif ( (mass_lead > 95.) and (mass_lead < 155.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):        # Run 2 experiment: Box (95, 85, 60, 70)
+		# elif ( CircleRadius < 35.8 ):                                                                                # Run 2 experiment: Circle r = 35.8
+		# elif ( CircleRadius < 32.4 ):                                                                                # Run 2 experiment: Circle r = 32.4
+		# elif ( Xhh < 2.24 ):                                                                                         # Run 2 experiment: Xhh shape with r=2.24
 			return 1
 		else:
 			return 2
