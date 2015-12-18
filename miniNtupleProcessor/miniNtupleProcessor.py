@@ -6,6 +6,8 @@ import array
 import sys
 from collections import defaultdict
 
+import time
+
 ##################
 ## load library ##
 ##################
@@ -75,7 +77,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			"85": -0.8433,
 		}
 
-		self._TriggerList = ["HLT_j360_a10r_L1J100", "HLT_4j85"]
+		self._TriggerList = ["HLT_j360_a10r_L1J100"]   # only fat-jet trigger since v00-05-00 !
 		self._doTriggerCut = True
 
 		self._TrackJetPtCut = 10.
@@ -86,15 +88,32 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MuonPtCut = 4.
 		self._MuonEtaCut = 2.5
 		self._MuonQualityCut = "Tight"
-		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back
+		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_Xsection.config"
+		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_Xsection.config"
+		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_mttStudy_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
-		self._Lumi = 3.19867          # Number for hh4b-v00-v04-01 -- not taken from GRL, bu re-calculated again with available dataset
+		self._Lumi = 3.31668          # Number for hh4b-v00-v05-00 -- not taken from GRL, bu re-calculated again with available dataset
+		                              # https://atlas-lumicalc.cern.ch/results/c1ca95/result.html
+		                              # iLumiCalc.exe --lumitag=OflLumi-13TeV-001 --livetrigger=L1_EM12 --trigger=None --xml=/tmp/lumifiles/c1ca95/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml --lar --lartag=LARBadChannelsOflEventVeto-RUN2-UPD4-04 -r 279932-280422,281130-281411,276073-276954,282625-284484,278727-279928,280423-281075
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
+
+		self._doMttStitch = False          # whether we do the mtt stitch
+		self._MttStitchCut = 1100.        # the cut on inclusive ttbar sample of mtt value
+		self._MttScale_allhad = 1.41910533173       # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.0355925095     # the scale factor applied on nonallhad mtt slices when doing stitching
+
+		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
+
+		self._Apply2bSBReweight = False           # apply additional re-weighting on the 2b-SB region
+		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/ReweightStorage.root"        # the file storing re-weighting functions
+		self._Apply2bSBReweightAux = None         # auxiliary object storing all related objects
+
+		self._doJERStudy = True          # turn on JERStudy --- basically the truth response stuffs
 
 		#
 		# PRW
@@ -144,10 +163,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 100, 0, 5000, 100, 0, 5000)
 		self.histsvc.Book("LeadCaloJetM_SubLeadCaloJetM_fine", "LeadCaloJetM", "SubLeadCaloJetM", self._EvtWeight, 1000, 0, 1000, 1000, 0, 1000)
 
-		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 35, 0, 3.5)
+		self.histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 70, 0, 3.5)
 		self.histsvc.Book("DiJetDeltaEta", "DiJetDeltaEta", self._EvtWeight, 80, -4, 4)
 		self.histsvc.Book("DiJetDeltaR", "DiJetDeltaR", self._EvtWeight, 100, 0, 5)
 		self.histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 100, 0, 5000)
+
+		self.histsvc.Book("DiJetMassPrime", "DiJetMassPrime", self._EvtWeight, 100, 0, 5000)
+		self.histsvc.Book("ChannelNumber_DiJetMassPrime", "ChannelNumber", "DiJetMassPrime", self._EvtWeight, 21, 301486.5, 301507.5, 100, 0, 5000)
 
 		self.histsvc.Book("dRjj_LeadCaloJet", "dRjj_LeadCaloJet", self._EvtWeight, 75, 0, 1.5)
 		self.histsvc.Book("dRjj_SubLeadCaloJet", "dRjj_SubLeadCaloJet", self._EvtWeight, 75, 0, 1.5)
@@ -166,6 +188,65 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.Book(TrackJetName + "_M", TrackJetName + "_M", self._EvtWeight, 100, 0, 1000)
 			self.histsvc.Book(TrackJetName + "_E", TrackJetName + "_E", self._EvtWeight, 100, 0, 1000)
 			self.histsvc.Book(TrackJetName + "_MV2c20", TrackJetName + "_MV2c20", self._EvtWeight, 220, -1.1, 1.1)
+
+		##########################################
+		# Initialize Output Tree for Reweighting #
+		##########################################
+
+		self.ntuplesvc = ROOT.Analysis_AutoTrees("Events")
+		self.ntuplesvc.GetTree().SetDirectory(self.outputfile)
+
+		EventVarListPython = [
+		                       "EventWeight",
+
+		                       "nbtag",
+		                       "MassRegion",
+
+		                       "DiJetDeltaPhi",
+		                       "DiJetDeltaR",
+		                       "LeadCaloJetEta",
+		                       "LeadCaloJetPhi",
+		                       "LeadTrackJet_LeadCaloJet_Pt",
+		                       "SubLeadTrackJet_SubLeadCaloJet_Pt",
+		                     ]
+		EventVarList = ROOT.vector(ROOT.TString)()
+		for EventVar in EventVarListPython:
+			EventVarList.push_back( EventVar )
+
+		self.ntuplesvc.SetEventVariableList(EventVarList)
+
+		if not self.ntuplesvc.SetupBranches():
+			print "ERROR! Unable to setup ntuple branches!"
+			sys.exit(0)
+
+		##########################################
+		# Initialize 2bSB reweight function here #
+		##########################################
+
+		if self._Apply2bSBReweight:
+
+			self._Apply2bSBReweightAux = {}
+
+			ReweightFile = ROOT.TFile(self._Apply2bSBReweightFile)
+			self._Apply2bSBReweightAux['File'] = ReweightFile
+
+			self._Apply2bSBReweightAux['FunctionDict'] = {}
+			KeyList = ReweightFile.GetListOfKeys()
+			for i in range(KeyList.GetEntries()):
+
+				functionName = KeyList.At(i).GetName()
+				splitIndex = functionName.find('_Iter')
+				varname = functionName[:splitIndex]
+
+				tf1Obj = ReweightFile.Get(functionName)
+				fitMin = ROOT.Double(0.)
+				fitMax = ROOT.Double(0.)
+				tf1Obj.GetRange(fitMin, fitMax)
+
+				if varname not in self._Apply2bSBReweightAux['FunctionDict'].keys():
+					self._Apply2bSBReweightAux['FunctionDict'][varname] = []
+
+				self._Apply2bSBReweightAux['FunctionDict'][varname].append( (tf1Obj, fitMin, fitMax) )
 
 		###############################
 		# Initialize other tools here #
@@ -222,6 +303,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.histsvc.Reset()
 
+		#########################################
+		# reset ntuple service at the beginning #
+		#########################################
+
+		self.ntuplesvc.ResetBranches()
+
 		###################
 		# Data/MC Control #
 		###################
@@ -236,6 +323,21 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			else:
 				print "Unable to recognize self._ForceDataMC",self._ForceDataMC
 				return
+
+		#################################
+		# Interlock on 2bSB reweighting #
+		#################################
+
+		# 2bSB reweighting is only applied on data
+		if self._Apply2bSBReweight and _isMC:
+			self._Apply2bSBReweight = False
+
+		#########################
+		# Interlock on JERStudy #
+		#########################
+
+		if self._doJERStudy and (not _isMC):
+			self._doJERStudy = False
 
 		####################
 		# Deal with weghts #
@@ -255,6 +357,25 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self._EvtWeight[0] = 1.
 
 		if _isMC: self.histsvc.Set("ChannelNumber", tree.mcChannelNumber)
+
+		########################
+		# Mtt Stitching for MC #
+		########################
+
+		if _isMC:
+			# Interlock
+			if self._doMttStitch and (not hasattr(tree, 'truth_mtt')):
+				print "WARNING! No mtt information in n-tuple, while mtt stitching is requested. It will be turned OFF"
+				self._doMttStitch = False
+
+			# apply both mtt rejection for inclusive ttbar sample
+			# and weight correction for mtt slices
+			if self._doMttStitch:
+				if not self.MttStitch(tree):
+					return
+
+			if hasattr(tree, 'truth_mtt'):
+				self.histsvc.AutoFill("GoodEvent", "_MttStudy", "truth_mtt_%s" % (tree.mcChannelNumber), tree.truth_mtt/1000., self._EvtWeight[0], 300, 0, 3000)
 
 
 		############
@@ -321,6 +442,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		CaloJetList = [LeadCaloJet, SubLeadCaloJet]
 
+		#
+		# calo-jet mass cut (BEFORE muon correction)
+		#
+
+		if LeadCaloJet.p.M() < self._JetMassCut: return
+		if SubLeadCaloJet.p.M() < self._JetMassCut: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloJetMassCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassCaloJetMassCut", _isMC)
+
 		############################
 		# Track-jet Reconstruction #
 		############################
@@ -355,6 +486,24 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		AssocTrackJetList = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet  ]
 		AssocTrackJetFlattenList = AssocTrackJets_LeadCaloJet + AssocTrackJets_SubLeadCaloJet
+
+		#
+		# Response (for MC Only)
+		#
+
+		if self._doJERStudy:
+			CaloJetListInputForJER = [(iCaloJet, CaloJet) for iCaloJet, CaloJet in enumerate(CaloJetList)]
+
+			self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
+			self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
+
+			# if (len(AssocTrackJets_LeadCaloJet) == 2) and (len(AssocTrackJets_SubLeadCaloJet)) == 2:
+			# 	self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
+			# 	self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
+
+			# 	if self.GetDiJetMassWindow(CaloJetList[0], CaloJetList[1]) == 0:
+			# 		self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
+			# 		self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
 
 		##################
 		# Add Back Muons #
@@ -459,6 +608,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 		self.histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
 
+		LeadCaloJet4pScaled = (LeadCaloJet.p) * (125./LeadCaloJet.p.M())
+		SubLeadCaloJet4pScaled = (SubLeadCaloJet.p) * (125./SubLeadCaloJet.p.M())
+		self.histsvc.Set("DiJetMassPrime", (LeadCaloJet4pScaled + SubLeadCaloJet4pScaled).M())
+
 		#############################
 		# Fill Track-Jet Kinematics #
 		#############################
@@ -467,6 +620,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.Set("dRjj_LeadCaloJet", AssocTrackJets_LeadCaloJet[0].p.DeltaR(AssocTrackJets_LeadCaloJet[1].p))
 		if len(AssocTrackJets_SubLeadCaloJet) == 2:
 			self.histsvc.Set("dRjj_SubLeadCaloJet", AssocTrackJets_SubLeadCaloJet[0].p.DeltaR(AssocTrackJets_SubLeadCaloJet[1].p))
+
+		#####################################################################################################################
+
+		self.histsvc.MakeHists("GoodEvent", "_BeforeTrackJetMultiplicityCut")
 
 		#####################################################################################################################
 
@@ -542,6 +699,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			if PassSRMass:
 				self.MakeCutflowPlot(tree, "Pass3GoodTrackJetPassSRMass", _isMC)
 
+		#####################################################################################################################
+
+		self.histsvc.MakeHists("GoodEvent", "_BeforeBTagging")
+
+		#####################################################################################################################
+
 		###########################
 		# Now we play with b-tags #
 		###########################
@@ -586,15 +749,20 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					self.MakeCutflowPlot(tree, PassBtagName+WP, _isMC)
 
 					if Pass4GoodTrackJet:
+
+						Reweight = 1.
+						if self._Apply2bSBReweight and (PassBtagName == "Pass2b"):
+							Reweight *= self.Get2bSBReweight()
+
 						if PassSBMass:
 							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass")
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass", Reweight)
 						if PassCRMass:
 							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass")
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass", Reweight)
 						if PassSRMass:
 							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass")
+							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass", Reweight)
 					if Pass3GoodTrackJet:
 						if PassSBMass:
 							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
@@ -605,6 +773,39 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 						if PassSRMass:
 							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
 							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass")
+
+		####################
+		# Fill Ntuple Here #
+		####################
+
+		NominalBtagDecision = PassBtagDict[self._MuonAddBackBtagWP]
+
+		# nbtag
+		if NominalBtagDecision['Pass2b']:
+			nbtag = 2
+		elif NominalBtagDecision['Pass3b']:
+			nbtag = 3
+		elif NominalBtagDecision['Pass4b']:
+			nbtag = 4
+		else:
+			nbtag = -1
+
+		# Fill variables
+		# 2/3/4-b, 4-trackjet, either SB or CR
+		if (nbtag > 0) and (Pass4GoodTrackJet) and (PassSBMass or PassCRMass):
+			self.ntuplesvc.SetEventValue("EventWeight", self._EvtWeight[0])
+
+			self.ntuplesvc.SetEventValue("nbtag", nbtag)
+			self.ntuplesvc.SetEventValue("MassRegion", MassRegion)
+
+			self.ntuplesvc.SetEventValue("DiJetDeltaPhi", self.histsvc.Get("DiJetDeltaPhi"))
+			self.ntuplesvc.SetEventValue("DiJetDeltaR", self.histsvc.Get("DiJetDeltaR"))
+			self.ntuplesvc.SetEventValue("LeadCaloJetEta", self.histsvc.Get("LeadCaloJetEta"))
+			self.ntuplesvc.SetEventValue("LeadCaloJetPhi", self.histsvc.Get("LeadCaloJetPhi"))
+			self.ntuplesvc.SetEventValue("LeadTrackJet_LeadCaloJet_Pt", self.histsvc.Get("LeadTrackJet_LeadCaloJet_Pt"))
+			self.ntuplesvc.SetEventValue("SubLeadTrackJet_SubLeadCaloJet_Pt", self.histsvc.Get("SubLeadTrackJet_SubLeadCaloJet_Pt"))
+
+			self.ntuplesvc.AutoFill()
 
 	######################################################################
 	# Below is utility region
@@ -653,10 +854,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# same as XhhCommon cutflow
 		if Xhh < 1.6:
 			return 0
-		elif ( (mass_lead > 95.) and (mass_lead < 160.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):        # Run 1 setting
+		# elif ( (mass_lead > 95.) and (mass_lead < 160.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):        # Run 1 setting
 		# elif ( (mass_lead > 95.) and (mass_lead < 155.) and (mass_sublead > 80.) and (mass_sublead < 155.) ):        # Run 2 experiment: Box (95, 80, 60, 75)
 		# elif ( (mass_lead > 95.) and (mass_lead < 155.) and (mass_sublead > 85.) and (mass_sublead < 155.) ):        # Run 2 experiment: Box (95, 85, 60, 70)
-		# elif ( CircleRadius < 35.8 ):                                                                                # Run 2 experiment: Circle r = 35.8
+		elif ( CircleRadius < 35.8 ):                                                                                # Run 2 experiment: Circle r = 35.8 (default since v00-05-00)
 		# elif ( CircleRadius < 32.4 ):                                                                                # Run 2 experiment: Circle r = 32.4
 		# elif ( Xhh < 2.24 ):                                                                                         # Run 2 experiment: Xhh shape with r=2.24
 			return 1
@@ -696,6 +897,106 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		else:
 			print "Unrecognized muon quality cut",self._MuonQualityCut
 			return False
+
+	def MttStitch(self, tree):
+		mtt = tree.truth_mtt/1000.   # MeV -> GeV
+		channelNumber = tree.mcChannelNumber
+
+		if (channelNumber == 410007) or (channelNumber == 410000):
+			# inclusive ttbar
+			return mtt < self._MttStitchCut
+		else:
+			# other channels, including boosted mtt slices and irrlevant channels
+
+			# for allhad/nonallhad mtt slices, a scale-factor needs to be applied for stitching purpose
+			if (channelNumber >= 303722) and (channelNumber <= 303726):  # allhad
+				self._EvtWeight[0] *= self._MttScale_allhad
+			elif (channelNumber >= 301528) and (channelNumber <= 301532):  # nonallhad
+				self._EvtWeight[0] *= self._MttScale_nonallhad
+
+			return True
+
+	def Get2bSBReweight(self):
+		# start = time.time()
+
+		reweight = 1.
+
+		FunctionDict = self._Apply2bSBReweightAux['FunctionDict']
+		for varname, FunctionList in FunctionDict.items():
+			value = self.histsvc.Get(varname)
+
+			for (tf1Obj, fitMin, fitMax) in FunctionList:
+				if (value > fitMin) and (value < fitMax):
+					reweight *= tf1Obj(value)
+
+		# end = time.time()
+
+		# print reweight, end - start
+		return reweight
+
+	# CaloJetList should be a list of (index, calojet) where index is the index in tree structure
+	def MakeJERPlots(self, tree, CaloJetList, CutName):
+		for iCaloJet, CaloJet in CaloJetList:
+			TruthMatched = tree.truth_hcand_boosted_match[iCaloJet]
+
+			self.histsvc.AutoFill("GoodEvent", "_JERStudy", "CaloJetPt_CaloJetTruthMatch__"+CutName, CaloJet.p.Pt(), TruthMatched, self._EvtWeight[0], 40, 0, 2000, 2, -0.5, 1.5)
+
+			if TruthMatched:
+				MatchedTruthJet = ROOT.TLorentzVector()
+				MatchedTruthJet.SetPtEtaPhiM(tree.truth_hcand_boosted_pt[iCaloJet]/1000., tree.truth_hcand_boosted_eta[iCaloJet], tree.truth_hcand_boosted_phi[iCaloJet], tree.truth_hcand_boosted_m[iCaloJet]/1000.)
+
+				# Inclusive mass bin
+				self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetPtResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+				if MatchedTruthJet.E() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+				if MatchedTruthJet.M() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+
+				TruthMass = MatchedTruthJet.M()
+				if TruthMass < 50:
+					MassBin = "M0"
+				elif TruthMass < 100:
+					MassBin = "M1"
+				elif TruthMass < 150:
+					MassBin = "M2"
+				else:
+					MassBin = "M3"
+
+				# Exclusive mass bin
+				self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetPtResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+				if MatchedTruthJet.E() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+				if MatchedTruthJet.M() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+
+	# measure the response as function of m/pT, in bins of pT
+	def MakeJERPlots2(self, tree, CaloJetList, CutName):
+		for iCaloJet, CaloJet in CaloJetList:
+			TruthMatched = tree.truth_hcand_boosted_match[iCaloJet]
+
+			if TruthMatched:
+				MatchedTruthJet = ROOT.TLorentzVector()
+				MatchedTruthJet.SetPtEtaPhiM(tree.truth_hcand_boosted_pt[iCaloJet]/1000., tree.truth_hcand_boosted_eta[iCaloJet], tree.truth_hcand_boosted_phi[iCaloJet], tree.truth_hcand_boosted_m[iCaloJet]/1000.)
+
+				TruthBoost = MatchedTruthJet.M()/MatchedTruthJet.Pt()
+
+				# Inclusive pt bin
+				self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetPtResponse__"+CutName, TruthBoost, (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+				if MatchedTruthJet.E() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse__"+CutName, TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+				if MatchedTruthJet.M() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse__"+CutName, TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+
+				TruthMass = MatchedTruthJet.M()
+				if TruthMass < 50:
+					MassBin = "M0"
+				elif TruthMass < 100:
+					MassBin = "M1"
+				elif TruthMass < 150:
+					MassBin = "M2"
+				else:
+					MassBin = "M3"
+
+				# Exclusive pt bin
+				self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetPtResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+				if MatchedTruthJet.E() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+				if MatchedTruthJet.M() > 0:  self.histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+
+
 
 
 

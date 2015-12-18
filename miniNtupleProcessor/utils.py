@@ -3,7 +3,9 @@ import re
 import os
 
 dict_RSG_channelNumber_Mass = {
+
 	301488: ('c10', 300),
+	301489: ('c10', 400),
 	301490: ('c10', 500),
 	301491: ('c10', 600),
 	301492: ('c10', 700),
@@ -22,6 +24,27 @@ dict_RSG_channelNumber_Mass = {
 	301505: ('c10', 2500),
 	301506: ('c10', 2750),
 	301507: ('c10', 3000),
+
+	301508: ('c20', 300),
+	301509: ('c20', 400),
+	301510: ('c20', 500),
+	301511: ('c20', 600),
+	301512: ('c20', 700),
+	301513: ('c20', 800),
+	301514: ('c20', 900),
+	301515: ('c20', 1000),
+	301516: ('c20', 1100),
+	301517: ('c20', 1200),
+	301518: ('c20', 1300),
+	301519: ('c20', 1400),
+	301520: ('c20', 1500),
+	301521: ('c20', 1600),
+	301522: ('c20', 1800),
+	301523: ('c20', 2000),
+	301524: ('c20', 2250),
+	301525: ('c20', 2500),
+	301526: ('c20', 2750),
+	301527: ('c20', 3000),
 }
 
 # run number range is all INCLUSIVE
@@ -107,13 +130,51 @@ def GetRunNumberList(queryString):
 # Works on SLAC machine
 # format of hh4b_version should be something like hh4b-00-04-01
 def GetRSGMetaData(hh4b_version):
+	def ConvertVersionToNumber(v):
+		vSplit = v.split('-')[1:]
+		vSplit = [int(item) for item in vSplit]
+		return vSplit
+
+	# 1 means v1 > v2; -1 means v1 < v2; 0 means v1 == v2
+	# None means error
+	def CompareVersion(v1, v2):
+		v1Split = ConvertVersionToNumber(v1)
+		v2Split = ConvertVersionToNumber(v2)
+
+		if len(v1Split) != len(v2Split):
+			print "length incompatible between %s and %s!" % (v1, v2)
+			return None
+		else:
+			for index in range(len(v1)):
+				v1Item = v1[index]
+				v2Item = v2[index]
+
+				if v1Item == v2Item:
+					continue
+				else:
+					if v1Item > v2Item:
+						return 1
+					else:
+						return -1
+
+			return 0
+
 	hh4b_version_output = hh4b_version[:4]+"_v"+hh4b_version[5:]
 	hh4b_version_path = hh4b_version[:5]+'v'+hh4b_version[5:]
 
-	path = "/atlas/local/zengq/XHHbbbb/miniNtuple/%s/mc15_13TeV/" % (hh4b_version_path)
+	if CompareVersion(hh4b_version, 'hh4b-00-04-01') == 1:
+		path = "/atlas/local/zengq/XHHbbbb/miniNtuple/%s/mc15_13TeV_metadata/" % (hh4b_version_path)
+	else: 
+		path = "/atlas/local/zengq/XHHbbbb/miniNtuple/%s/mc15_13TeV/" % (hh4b_version_path)
+
 	channelNumberList = dict_RSG_channelNumber_Mass.keys()
 
 	for channelNumber in channelNumberList:
+
+		# a special fix on hh4b-00-05-00
+		if channelNumber == 301526:
+			continue
+
 		outputFileName = "%s_RSG_%s_M%s_metadata.root" % (hh4b_version_output, dict_RSG_channelNumber_Mass[channelNumber][0], dict_RSG_channelNumber_Mass[channelNumber][1])
 		cmd = 'hadd -f %s %s' % ( outputFileName , path+"group.phys-exotics.mc15_13TeV."+str(channelNumber)+".*"+hh4b_version+"*metadata.root/*.root*" )
 		print cmd
@@ -121,7 +182,8 @@ def GetRSGMetaData(hh4b_version):
 
 # print out metadata of RSG
 # hh4b_version should be something like 'hh4b_v00-04-01'
-def ReadMetaData(hh4b_version):
+# if you specify ibin, it is the bin number in metadata histogram
+def ReadMetaData(hh4b_version, ibin=None):
 	import subprocess
 	fileList = subprocess.check_output(['ls', 'data/'+hh4b_version])
 	fileList = fileList.split('\n')
@@ -135,6 +197,9 @@ def ReadMetaData(hh4b_version):
 
 		output = "%s : " % (fileName)
 		for i in range(1, h.GetNbinsX()+1):
+			if ibin is not None:
+				if i != ibin: continue
+
 			output += "%f (%s) " % (h.GetBinContent(i), h.GetXaxis().GetBinLabel(i))
 
 		print output

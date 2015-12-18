@@ -6,13 +6,31 @@ import os
 
 treename = "XhhMiniNtuple"
 
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_data.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_ttbar.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-04-01/hh4b_v00-04-01_RSG_c10.txt"
+##########################
+# Normal Data Processing #
+##########################
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_data.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_RSG_c10.txt"
+
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1000.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1500.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2000.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2500.txt"
+
+#############
+# Mtt Study #
+#############
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_mttStudy_filelist.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_mttStudy_filelist_ttbarOnly.txt"
+
+#################
+# QCD JER Study #
+#################
+
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_filelist.txt"
 
 def loadDataset(treename, filename):
 	dataset = ROOT.TDSet('TTree', treename)
