@@ -91,9 +91,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_Xsection.config"
 		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_mttStudy_Xsection.config"
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_Xsection.config"
+		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
 		self._Lumi = 3.31668          # Number for hh4b-v00-v05-00 -- not taken from GRL, bu re-calculated again with available dataset
@@ -110,7 +110,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 
 		self._Apply2bSBReweight = False           # apply additional re-weighting on the 2b-SB region
-		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/ReweightStorage.root"        # the file storing re-weighting functions
+		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/ReweightStorage.root"        # the file storing re-weighting functions
 		self._Apply2bSBReweightAux = None         # auxiliary object storing all related objects
 
 		self._doJERStudy = True          # turn on JERStudy --- basically the truth response stuffs
