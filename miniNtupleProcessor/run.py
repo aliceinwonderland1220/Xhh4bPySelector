@@ -17,7 +17,7 @@ treename = "XhhMiniNtuple"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1000.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m1500.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2000.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2500.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_m2500.txt"
 
 #############
 # Mtt Study #
@@ -30,7 +30,7 @@ treename = "XhhMiniNtuple"
 # QCD JER Study #
 #################
 
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_filelist.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_filelist.txt"
 
 def loadDataset(treename, filename):
 	dataset = ROOT.TDSet('TTree', treename)
@@ -85,4 +85,4 @@ def runProof(address, nworkers=0):
 
 if __name__ == "__main__":
 	# runProof("lite://", 1)
-	runProof("zengq@atlint04.slac.stanford.edu:21001")
+	runProof("zengq@atlint04.slac.stanford.edu:21001", 50)

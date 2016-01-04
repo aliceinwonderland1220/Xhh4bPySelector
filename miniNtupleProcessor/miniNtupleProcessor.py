@@ -104,8 +104,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._doMttStitch = False          # whether we do the mtt stitch
 		self._MttStitchCut = 1100.        # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.41910533173       # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.0355925095     # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.19261524151       # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.04132354396     # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 
@@ -113,7 +113,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/ReweightStorage.root"        # the file storing re-weighting functions
 		self._Apply2bSBReweightAux = None         # auxiliary object storing all related objects
 
-		self._doJERStudy = True          # turn on JERStudy --- basically the truth response stuffs
+		self._doJERStudy = False          # turn on JERStudy --- basically the truth response stuffs
 
 		#
 		# PRW
@@ -443,7 +443,44 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		CaloJetList = [LeadCaloJet, SubLeadCaloJet]
 
 		#
-		# calo-jet mass cut (BEFORE muon correction)
+		# Calo-Jet Response (for MC Only). Should be before muon correciton
+		#
+
+		if self._doJERStudy:
+			CaloJetListInputForJER = [(iCaloJet, CaloJet) for iCaloJet, CaloJet in enumerate(CaloJetList)]
+
+			self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
+			self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
+
+			# if (len(AssocTrackJets_LeadCaloJet) == 2) and (len(AssocTrackJets_SubLeadCaloJet)) == 2:
+			# 	self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
+			# 	self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
+
+			# 	if self.GetDiJetMassWindow(CaloJetList[0], CaloJetList[1]) == 0:
+			# 		self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
+			# 		self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
+
+		##########################
+		# Calo Jet Kinematic Cut #
+		##########################
+
+		# reminder: the baseline 250 GeV and 2.0 eta cut is on calo-jet with NO muon correction
+
+		#
+		# pT/eta cut
+		#
+
+		if LeadCaloJet.p.Pt() < 350.:      return
+		if abs(LeadCaloJet.p.Eta()) > 2.0: return
+
+		if SubLeadCaloJet.p.Pt() < 250.:      return
+		if abs(SubLeadCaloJet.p.Eta()) > 2.0: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloKinematicsCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassCaloKinematicsCut", _isMC)
+
+		#
+		# mass cut (no muon correction)
 		#
 
 		if LeadCaloJet.p.M() < self._JetMassCut: return
@@ -451,6 +488,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloJetMassCut", _isMC)
 		self.MakeCutflowPlot(tree, "PassCaloJetMassCut", _isMC)
+
+		#
+		# calo-jet dEta cuts
+		# 
+
+		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
+
+		if not PassdEtaCut:
+			return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
 
 		############################
 		# Track-jet Reconstruction #
@@ -486,24 +535,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		AssocTrackJetList = [ AssocTrackJets_LeadCaloJet, AssocTrackJets_SubLeadCaloJet  ]
 		AssocTrackJetFlattenList = AssocTrackJets_LeadCaloJet + AssocTrackJets_SubLeadCaloJet
-
-		#
-		# Response (for MC Only)
-		#
-
-		if self._doJERStudy:
-			CaloJetListInputForJER = [(iCaloJet, CaloJet) for iCaloJet, CaloJet in enumerate(CaloJetList)]
-
-			self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
-			self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterCaloJetMassCut")
-
-			# if (len(AssocTrackJets_LeadCaloJet) == 2) and (len(AssocTrackJets_SubLeadCaloJet)) == 2:
-			# 	self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
-			# 	self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterTwoTrackJetCut")
-
-			# 	if self.GetDiJetMassWindow(CaloJetList[0], CaloJetList[1]) == 0:
-			# 		self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
-			# 		self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterHiggsMassWindowCut")
 
 		##################
 		# Add Back Muons #
@@ -554,38 +585,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			CaloJet.p = CaloJet.p + sumMuonCorr
 
-		# From now on, all calo-jet has muon correction
-
-		##########################
-		# Calo Jet Kinematic Cut #
-		##########################
-
-		# reminder: the baseline 250 GeV and 2.0 eta cut is on calo-jet with NO muon correction
-
-		#
-		# Re-apply kineamtics cut on corrected calo-jets
-		#
-
-		if LeadCaloJet.p.Pt() < 350.:      return
-		if abs(LeadCaloJet.p.Eta()) > 2.0: return
-
-		if SubLeadCaloJet.p.Pt() < 250.:      return
-		if abs(SubLeadCaloJet.p.Eta()) > 2.0: return
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloKinematicsCut", _isMC)
-		self.MakeCutflowPlot(tree, "PassCaloKinematicsCut", _isMC)
-
-		#
-		# calo-jet dEta cuts
-		# 
-
-		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
-
-		if not PassdEtaCut:
-			return
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
-		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
+		#################################################
+		# From now on, all calo-jet has muon correction #
+		# For kinematics distribution, they should      #
+		# start from here                               #
+		#################################################
 
 		####################################################################################################################
 
