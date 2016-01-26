@@ -1,0 +1,1 @@
+/nfs/slac/g/atlas/u01/users/zengq/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-01q/MiniNtuple_RSG_c10_allSys.root

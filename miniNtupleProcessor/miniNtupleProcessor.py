@@ -7,6 +7,7 @@ import sys
 from collections import defaultdict
 
 import time
+import json
 
 ##################
 ## load library ##
@@ -49,7 +50,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# selector options #
 		####################
 
-		self.histfile = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/test.root"       # use absolute path, and all output will be put under output folder
+		# self.histfile = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/test.root"       # use absolute path, and all output will be put under output folder
 		self.printInterval = 1000
 		# generate list of variables that will actuall be used by parsing current file
 		print ": URL of file to be parsed for varable activation"
@@ -66,6 +67,38 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.treeAccessor = 2
 		self.useSetBranchStatus = 1
+
+		################
+		# options file #
+		################
+
+		print "Loading option file ..."
+
+		self._dictOptions = {}
+		optionFilePath = os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/options.json"
+		if os.path.isfile(optionFilePath):
+			_fOptions = open(optionFilePath)
+			self._dictOptions = json.load(_fOptions)
+			_fOptions.close()
+		else:
+			print "WARNING: Unable to find file %s. Empty option will be used." % (optionFilePath)
+
+		print "========================"
+		print "==      Options       =="
+		print "========================"
+		for key,value in self._dictOptions.items():
+			print " %s : %s " % (key, value)
+		print "========================"
+
+		print "Finish loading option file!"
+
+		# self._optXXXX is reserved for option taken from options.json
+		self._optOutputDir = self._dictOptions.get("OutputDir", os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/output/")
+		self.histfile = self._optOutputDir+"/test.root"
+		self._optChannelCut = self._dictOptions.get("ChannelCut")
+		self._optBtagSys = self._dictOptions.get("BtagSys", "")
+		self._CacheSFSysNameList = None
+		self._optOverlapTree = self._dictOptions.get("OverlapTree", False)
 
 		###################
 		# physics options #
@@ -91,21 +124,19 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_Xsection.config"
-		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_mttStudy_Xsection.config"
-		# self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/hh4b_v00-05-00_JERStudy_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
-		self._Lumi = 3.31668          # Number for hh4b-v00-v05-00 -- not taken from GRL, bu re-calculated again with available dataset
-		                              # https://atlas-lumicalc.cern.ch/results/c1ca95/result.html
-		                              # iLumiCalc.exe --lumitag=OflLumi-13TeV-001 --livetrigger=L1_EM12 --trigger=None --xml=/tmp/lumifiles/c1ca95/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml --lar --lartag=LARBadChannelsOflEventVeto-RUN2-UPD4-04 -r 279932-280422,281130-281411,276073-276954,282625-284484,278727-279928,280423-281075
+		self._Lumi = 3.20905          # Number for hh4b-v00-v06-00 -- not taken from GRL, bu re-calculated again with available dataset
+		                              # https://atlas-lumicalc.cern.ch/results/194877/result.html
+		                              # iLumiCalc.exe --lumitag=OflLumi-13TeV-003 --livetrigger=L1_EM12 --trigger=None --xml=/tmp/lumifiles/194877/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml --lar --lartag=LARBadChannelsOflEventVeto-RUN2-UPD4-04 -r 279932-280422,281130-281411,276073-276954,282625-284484,278727-279928,280423-281075
 
 		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
 
-		self._doMttStitch = False          # whether we do the mtt stitch
+		self._doMttStitch = True          # whether we do the mtt stitch
 		self._MttStitchCut = 1100.        # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.19261524151       # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.04132354396     # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.19036384133       # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.04097214009     # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 
@@ -196,21 +227,46 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.ntuplesvc = ROOT.Analysis_AutoTrees("Events")
 		self.ntuplesvc.GetTree().SetDirectory(self.outputfile)
 
-		EventVarListPython = [
+		self.EventVarListPython__base = [
 		                       "EventWeight",
+		                       "SF",
 
 		                       "nbtag",
 		                       "MassRegion",
 
-		                       "DiJetDeltaPhi",
+		                       "ChannelNumber",
+		                       ]
+
+		self.EventVarListPython__kinematic = [
+		                       "DiJetMass",
 		                       "DiJetDeltaR",
+		                       "DiJetDeltaPhi",
+		                       "DiJetDeltaEta",
+
+		                       "DiJetMassPrime",
+
+		                       "LeadCaloJetM",
+		                       "SubLeadCaloJetM",
+		                       "LeadCaloJetPt",
+		                       "SubLeadCaloJetPt",
 		                       "LeadCaloJetEta",
+		                       "SubLeadCaloJetEta",
 		                       "LeadCaloJetPhi",
+		                       "SubLeadCaloJetPhi",
+
+		                       "dRjj_LeadCaloJet",
+		                       "dRjj_SubLeadCaloJet",
+
 		                       "LeadTrackJet_LeadCaloJet_Pt",
+		                       "SubLeadTrackJet_LeadCaloJet_Pt",
+		                       "LeadTrackJet_SubLeadCaloJet_Pt",
 		                       "SubLeadTrackJet_SubLeadCaloJet_Pt",
 		                     ]
+
+		self.EventVarListPython = self.EventVarListPython__base + self.EventVarListPython__kinematic
+
 		EventVarList = ROOT.vector(ROOT.TString)()
-		for EventVar in EventVarListPython:
+		for EventVar in self.EventVarListPython:
 			EventVarList.push_back( EventVar )
 
 		self.ntuplesvc.SetEventVariableList(EventVarList)
@@ -218,6 +274,37 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		if not self.ntuplesvc.SetupBranches():
 			print "ERROR! Unable to setup ntuple branches!"
 			sys.exit(0)
+
+		# Initialize TTree for data overlap check #
+
+		if self._optOverlapTree:
+			self.overlaptree = ROOT.Analysis_AutoTrees("OverlapCheck")
+			self.overlaptree.GetTree().SetDirectory(self.outputfile)
+
+			listToFillPython = [
+			                     "RunNumber",
+			                     "EventNumber",
+
+			                     "Pass4bSR",
+			                     "Pass4bCR",
+			                     "Pass4bSB",
+			                     "Pass3bSR",
+			                     "Pass3bCR",
+			                     "Pass3bSB",
+			                     "Pass2bSR",
+			                     "Pass2bCR",
+			                     "Pass2bSB",
+			                   ]
+
+			listToFillVector = ROOT.vector(ROOT.TString)()
+			for EventVar in listToFillPython:
+				listToFillVector.push_back(EventVar)
+
+			self.overlaptree.SetEventVariableList(listToFillVector)
+
+			if not self.overlaptree.SetupBranches():
+				print "ERROR! Unable to setup ntuple branches for OverlapTree!"
+				sys.exit(0)
 
 		##########################################
 		# Initialize 2bSB reweight function here #
@@ -309,6 +396,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self.ntuplesvc.ResetBranches()
 
+		if self._optOverlapTree:
+			self.overlaptree.ResetBranches()
+
 		###################
 		# Data/MC Control #
 		###################
@@ -323,6 +413,51 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			else:
 				print "Unable to recognize self._ForceDataMC",self._ForceDataMC
 				return
+
+		#########################
+		# MC Channel Number Cut #
+		#########################
+
+		if _isMC and (self._optChannelCut is not None):
+			if tree.mcChannelNumber != self._optChannelCut:
+				return
+
+		################################
+		# BtagSys event-by-event Setup #
+		################################
+
+		# for unknown reason, jet_ak2track_asso_sysname could be of size 0!
+		_hasBtagSFBranch = hasattr(tree, "jet_ak2track_asso_sys")
+		if _hasBtagSFBranch and (tree.jet_ak2track_asso_sysname.size() == 0):
+			_hasBtagSFBranch = False
+
+		# for data, the xAODAnaHelper has automatically set all nominal SF to be 1.
+		if not _isMC:
+			self._optBtagSys = ""
+
+		# initialize all SF names
+		_SFSysNameList = []
+		if self._optBtagSys == "":
+			_SFSysNameList = [(0, "")]
+		else:
+			# assuming all sf sys name list is the same 
+			if self._CacheSFSysNameList is None:
+				if _hasBtagSFBranch:
+					self._CacheSFSysNameList = [(i,tree.jet_ak2track_asso_sysname[i]) for i in range(tree.jet_ak2track_asso_sysname.size())]
+				else:
+					print "Oops, you are very unlucky today. Event skipped!"
+					return
+
+			for iSF, SFName in self._CacheSFSysNameList:
+				# needs to be strictly the same now. This means only one b-tagging systematic will be considered at each run
+				if self._optBtagSys == SFName:
+					_SFSysNameList.append( (iSF, SFName) )
+					break
+
+		# check if only one systematics is considered
+		if len(_SFSysNameList) != 1:
+			print "ERROR! _SFSysNameList is of size %s" % (len(_SFSysNameList))
+			return
 
 		#################################
 		# Interlock on 2bSB reweighting #
@@ -518,6 +653,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			TrackJet = ROOT.Particle(TrackJet)
 			TrackJet.Set("MV2c20", tree.jet_ak2track_asso_MV2c20[0][iTrackJet])
 
+			for iSF,SFName in _SFSysNameList:
+				if _hasBtagSFBranch:
+					TrackJet.Set("SF"+SFName, tree.jet_ak2track_asso_sys[0][iTrackJet][iSF])
+				else:
+					TrackJet.Set("SF"+SFName, 1.)
+
 			AssocTrackJets_LeadCaloJet.append( TrackJet )
 
 		AssocTrackJets_SubLeadCaloJet = []
@@ -530,6 +671,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			TrackJet = ROOT.Particle(TrackJet)
 			TrackJet.Set("MV2c20", tree.jet_ak2track_asso_MV2c20[1][iTrackJet])
+
+			for iSF,SFName in _SFSysNameList:
+				if _hasBtagSFBranch:
+					TrackJet.Set("SF"+SFName, tree.jet_ak2track_asso_sys[1][iTrackJet][iSF])
+				else:
+					TrackJet.Set("SF"+SFName, 1.)
 
 			AssocTrackJets_SubLeadCaloJet.append( TrackJet )
 
@@ -716,6 +863,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		numbtrackjet_WP = defaultdict(lambda: 0)
 		numbtrackjet_WP_detail = defaultdict(lambda: [0,0])
 
+		# Global event b-tagging SF for nominal WP
+		EventBtagSF = {}
+		for iSF, SFName in _SFSysNameList:
+			EventBtagSF[SFName] = 1.
+
 		for iCaloJet in range(2):
 			for iTrackJet in range( min(2, len(AssocTrackJets[iCaloJet])) ):
 				TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
@@ -725,6 +877,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					if MV2c20 > self._MV2c20CutDict[WP]:
 						numbtrackjet_WP[WP] += 1
 						numbtrackjet_WP_detail[WP][iCaloJet] += 1
+
+				for iSF, SFName in _SFSysNameList:
+					EventBtagSF[SFName] = EventBtagSF[SFName] * TrackJet.Double("SF"+SFName)
+
+		# debug
+		# if (numbtrackjet_WP['77'] == 3) and Pass4GoodTrackJet:
+		# 	print "-----------"
+		# 	for iCaloJet in range(2):
+		# 		for iTrackJet in range(2):
+		# 			TrackJet = AssocTrackJets[iCaloJet][iTrackJet]
+		# 			print "iCalo, iTrackJet, pT, MV2c20, passBtag, SF, SFName:",iCaloJet,iTrackJet,TrackJet.p.Pt(),TrackJet.Double("MV2c20"),TrackJet.Double("MV2c20")>self._MV2c20CutDict['77'],TrackJet.Double("SF"+_SFSysNameList[0][1]),_SFSysNameList[0][1]
+		# 	print "-----------"
 
 		# when we say nbtags == 2, we require they should be at the same side, otherwise, nbtags will be set as 211
 		for WP in self._TrackJetWP:
@@ -750,37 +914,53 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for WP, PassBtags in PassBtagDict.items():
 			for PassBtagName, PassBtagDecision in PassBtags.items():
 				if PassBtagDecision:
-					self.MakeCutflowPlot(tree, PassBtagName+WP, _isMC)
+					# loop over Btag SF Systematics
+					# attention: only nominal (77) WP is used here
+					for SFName, GlobalSF in EventBtagSF.items():
+						##########################################################
+						# In case you still want multiple systematics in one run #
+						##########################################################
+						# # replace space to underscore
+						# SFNameAppendix = SFName.replace(" ", "_")
+						# SFNameAppendix = (SFName if SFName == "" else "_"+SFName)
 
-					if Pass4GoodTrackJet:
+						#######################################
+						# Here we assume only one systematics #
+						#######################################
+						SFNameAppendix = ""
 
-						Reweight = 1.
-						if self._Apply2bSBReweight and (PassBtagName == "Pass2b"):
-							Reweight *= self.Get2bSBReweight()
+						self.MakeCutflowPlot(tree, PassBtagName+WP+SFNameAppendix, _isMC, GlobalSF)
 
-						if PassSBMass:
-							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass", Reweight)
-						if PassCRMass:
-							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass", Reweight)
-						if PassSRMass:
-							self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass", Reweight)
-					if Pass3GoodTrackJet:
-						if PassSBMass:
-							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass")
-						if PassCRMass:
-							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass")
-						if PassSRMass:
-							self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass", _isMC)
-							self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass")
+						if Pass4GoodTrackJet:
+							Reweight = 1.
+							if self._Apply2bSBReweight and (PassBtagName == "Pass2b"):
+								Reweight *= self.Get2bSBReweight()
+
+							if PassSBMass:
+								self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass"+SFNameAppendix, _isMC, GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSBMass"+SFNameAppendix, Reweight*GlobalSF)
+							if PassCRMass:
+								self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass"+SFNameAppendix, _isMC, GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassCRMass"+SFNameAppendix, Reweight*GlobalSF)
+							if PassSRMass:
+								self.MakeCutflowPlot(tree, "Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass"+SFNameAppendix, _isMC, GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass4GoodTrackJet"+PassBtagName+WP+"PassSRMass"+SFNameAppendix, Reweight*GlobalSF)
+						if Pass3GoodTrackJet:
+							if PassSBMass:
+								self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass"+SFNameAppendix, _isMC*GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSBMass"+SFNameAppendix, GlobalSF)
+							if PassCRMass:
+								self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass"+SFNameAppendix, _isMC*GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassCRMass"+SFNameAppendix, GlobalSF)
+							if PassSRMass:
+								self.MakeCutflowPlot(tree, "Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass"+SFNameAppendix, _isMC*GlobalSF)
+								self.histsvc.MakeHists("GoodEvent", "_"+"Pass3GoodTrackJet"+PassBtagName+WP+"PassSRMass"+SFNameAppendix, GlobalSF)
 
 		####################
 		# Fill Ntuple Here #
 		####################
+
+		##############
 
 		NominalBtagDecision = PassBtagDict[self._MuonAddBackBtagWP]
 
@@ -795,21 +975,46 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			nbtag = -1
 
 		# Fill variables
-		# 2/3/4-b, 4-trackjet, either SB or CR
-		if (nbtag > 0) and (Pass4GoodTrackJet) and (PassSBMass or PassCRMass):
+		# 2/3/4-b, 4-trackjet, either SB/CR/SR
+		if (nbtag > 0) and (Pass4GoodTrackJet) and (PassSBMass or PassCRMass or PassSRMass):
 			self.ntuplesvc.SetEventValue("EventWeight", self._EvtWeight[0])
+			self.ntuplesvc.SetEventValue("SF", EventBtagSF[self._optBtagSys])   # Only SF of current b-tagging systematics will be stored
 
 			self.ntuplesvc.SetEventValue("nbtag", nbtag)
 			self.ntuplesvc.SetEventValue("MassRegion", MassRegion)
 
-			self.ntuplesvc.SetEventValue("DiJetDeltaPhi", self.histsvc.Get("DiJetDeltaPhi"))
-			self.ntuplesvc.SetEventValue("DiJetDeltaR", self.histsvc.Get("DiJetDeltaR"))
-			self.ntuplesvc.SetEventValue("LeadCaloJetEta", self.histsvc.Get("LeadCaloJetEta"))
-			self.ntuplesvc.SetEventValue("LeadCaloJetPhi", self.histsvc.Get("LeadCaloJetPhi"))
-			self.ntuplesvc.SetEventValue("LeadTrackJet_LeadCaloJet_Pt", self.histsvc.Get("LeadTrackJet_LeadCaloJet_Pt"))
-			self.ntuplesvc.SetEventValue("SubLeadTrackJet_SubLeadCaloJet_Pt", self.histsvc.Get("SubLeadTrackJet_SubLeadCaloJet_Pt"))
+			if _isMC:
+				self.ntuplesvc.SetEventValue("ChannelNumber", tree.mcChannelNumber)
+			else:
+				self.ntuplesvc.SetEventValue("ChannelNumber", 0)
+
+			for name in self.EventVarListPython__kinematic:
+				self.ntuplesvc.SetEventValue(name, self.histsvc.Get(name))
 
 			self.ntuplesvc.AutoFill()
+
+		##################
+
+		if (not _isMC) and (self._optOverlapTree):
+			# 2/3/4-b, 4-trackjet, either SB/CR/SR
+			if (nbtag > 0) and (Pass4GoodTrackJet) and (PassSBMass or PassCRMass or PassSRMass):
+				self.overlaptree.SetEventValue("RunNumber", tree.runNumber)
+				self.overlaptree.SetEventValue("EventNumber", tree.eventNumber)
+
+				self.overlaptree.SetEventValue("Pass4bSR", -1)  # blinding
+				self.overlaptree.SetEventValue("Pass4bCR", (nbtag == 4) and PassCRMass)
+				self.overlaptree.SetEventValue("Pass4bSB", (nbtag == 4) and PassSBMass)
+
+				self.overlaptree.SetEventValue("Pass3bSR", -1)  # blinding
+				self.overlaptree.SetEventValue("Pass3bCR", (nbtag == 3) and PassCRMass)
+				self.overlaptree.SetEventValue("Pass3bSB", (nbtag == 3) and PassSBMass)
+
+				self.overlaptree.SetEventValue("Pass2bSR", (nbtag == 2) and PassSRMass)
+				self.overlaptree.SetEventValue("Pass2bCR", (nbtag == 2) and PassCRMass)
+				self.overlaptree.SetEventValue("Pass2bSB", (nbtag == 2) and PassSBMass)
+
+				self.overlaptree.AutoFill()
+
 
 	######################################################################
 	# Below is utility region
@@ -872,13 +1077,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		if isMC:
 			self.histsvc.AutoFill("GoodEvent", "_TriggerStudy", "ChannelNumber_%s__%s" % (cutName, triggerName), tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
 
-	def MakeCutflowPlot(self, tree, cutName, isMC):
+	def MakeCutflowPlot(self, tree, cutName, isMC, extraWeight=1.0):
 		self.histsvc.AutoFill("GoodEvent", "_Cutflow", "CountEntry_%s" % (cutName), 1, 1., 1, 0.5, 1.5) 
-		self.histsvc.AutoFill("GoodEvent", "_Cutflow", "CountWeight_%s" % (cutName), 1, self._EvtWeight[0], 1, 0.5, 1.5)
+		self.histsvc.AutoFill("GoodEvent", "_Cutflow", "CountWeight_%s" % (cutName), 1, self._EvtWeight[0]*extraWeight, 1, 0.5, 1.5)
 
 		if isMC: 
 			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountEntry_%s" % (cutName), tree.mcChannelNumber, 1, 21, 301486.5, 301507.5)
-			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountWeight_%s" % (cutName), tree.mcChannelNumber, self._EvtWeight[0], 21, 301486.5, 301507.5)
+			self.histsvc.AutoFill("GoodEvent", "_Cutflow", "ChannelNumber_CountWeight_%s" % (cutName), tree.mcChannelNumber, self._EvtWeight[0]*extraWeight, 21, 301486.5, 301507.5)
 	
 	def FillTrackJetVars(self, TrackJet, TrackJetName):
 		if TrackJet is None:

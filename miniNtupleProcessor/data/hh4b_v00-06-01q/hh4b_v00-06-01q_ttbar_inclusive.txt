@@ -1,0 +1,2 @@
+/nfs/slac/g/atlas/u01/users/zengq/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-01q/MiniNtuple_ttbar_allhad_allSys.root
+/nfs/slac/g/atlas/u01/users/zengq/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-01q/MiniNtuple_ttbar_nonallhad_allSys.root
