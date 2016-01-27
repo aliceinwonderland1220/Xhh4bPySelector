@@ -16,17 +16,18 @@ treename = "XhhMiniNtuple"
 ###################
 
 # data
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_data.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_data.txt"
 
 # MC with Systematics
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_ttbar.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_RSG_c10.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets.txt"
 
 ########################
 # Inclusive ttbar only #
 ########################
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_ttbar_inclusive.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_inclusive.txt"
 
 ########################
 # btagging systematics #
@@ -180,6 +181,7 @@ def runSys(sysName, doLite=False, nworkers=0):
 	                # "ChannelCut": 301503.,   # m2000
 	                "BtagSys": (sysName if isBtagSys else ""),
 	                "OverlapTree": True,
+	                "Debug": False,
 	              }
 	######################################################################
 	json.dump(dictOptions, fOptions)
@@ -194,7 +196,8 @@ def runSys(sysName, doLite=False, nworkers=0):
 	if doLite:
 		address = "lite://"
 	else:
-		address = "zengq@atlint04.slac.stanford.edu:21001"
+		# address = "zengq@atlint04.slac.stanford.edu:21001"
+		address = "zengq@atlint03.slac.stanford.edu:21001"
 	runProof(address, nworkers)
 
 	# also remember to remove option files afterward

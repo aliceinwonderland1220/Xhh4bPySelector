@@ -99,6 +99,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._optBtagSys = self._dictOptions.get("BtagSys", "")
 		self._CacheSFSysNameList = None
 		self._optOverlapTree = self._dictOptions.get("OverlapTree", False)
+		self._optDebug = self._dictOptions.get("Debug", False)
 
 		###################
 		# physics options #
@@ -120,11 +121,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._doMuonCorrection = True
 		self._MuonPtCut = 4.
 		self._MuonEtaCut = 2.5
-		self._MuonQualityCut = "Tight"
+		self._MuonQualityCut = "Medium"          # Medium!
 		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-01q/hh4b_v00-06-01q_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
 		self._Lumi = 3.20905          # Number for hh4b-v00-v06-00 -- not taken from GRL, bu re-calculated again with available dataset
@@ -135,10 +136,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._doMttStitch = True          # whether we do the mtt stitch
 		self._MttStitchCut = 1100.        # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.19036384133       # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.04097214009     # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.17957281423             # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.03680199             # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
+		self._JetPtUpBound = 1500.        # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties
 
 		self._Apply2bSBReweight = False           # apply additional re-weighting on the 2b-SB region
 		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/ReweightStorage.root"        # the file storing re-weighting functions
@@ -174,6 +176,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#############################
 		# Initialize the histograms #
 		#############################
+
+		if self._optDebug: print "BookHistogram: Entering BookHistograms"
 
 		self.histsvc = ROOT.Analysis_AutoHists(self.outputfile)
 
@@ -223,6 +227,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		##########################################
 		# Initialize Output Tree for Reweighting #
 		##########################################
+
+		if self._optDebug: print "BookHistogram: Entering Reweighting Tree"
 
 		self.ntuplesvc = ROOT.Analysis_AutoTrees("Events")
 		self.ntuplesvc.GetTree().SetDirectory(self.outputfile)
@@ -276,6 +282,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			sys.exit(0)
 
 		# Initialize TTree for data overlap check #
+
+		if self._optDebug: print "BookHistogram: Entering Overlap Tree"
 
 		if self._optOverlapTree:
 			self.overlaptree = ROOT.Analysis_AutoTrees("OverlapCheck")
@@ -426,6 +434,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# BtagSys event-by-event Setup #
 		################################
 
+		if self._optDebug: print "ProcessEntry: BtagSys event-by-event Setup"
+
 		# for unknown reason, jet_ak2track_asso_sysname could be of size 0!
 		_hasBtagSFBranch = hasattr(tree, "jet_ak2track_asso_sys")
 		if _hasBtagSFBranch and (tree.jet_ak2track_asso_sysname.size() == 0):
@@ -478,6 +488,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Deal with weghts #
 		####################
 
+		if self._optDebug: print "ProcessEntry: Event weight computation"
+
 		# interlock on ApplyXsec
 		if (self._ApplyXsecWeight) and (not _isMC):
 			self._ApplyXsecWeight = False
@@ -496,6 +508,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		########################
 		# Mtt Stitching for MC #
 		########################
+
+		if self._optDebug: print "ProcessEntry: Mtt stitching for MC"
 
 		if _isMC:
 			# Interlock
@@ -516,6 +530,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		############
 		# Triggers #
 		############
+
+		if self._optDebug: print "ProcessEntry: Trigger"
 
 		PassedTriggerList = list(set(tree.passedTriggers).intersection(set(self._TriggerList)))
 		if len(PassedTriggerList) > 0: 
@@ -539,6 +555,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# GRL #
 		#######
 
+		if self._optDebug: print "ProcessEntry: GRL"
+
 		if not _isMC:
 			if self.GRL is None:
 				print "WARNING! GRL not setup for Data!"
@@ -552,6 +570,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#####################
 		# Calo-jet Business #
 		#####################
+
+		if self._optDebug: print "ProcessEntry: Calo-jet Business"
 
 		#
 		# calo-jet multiplicity cut
@@ -599,6 +619,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Calo Jet Kinematic Cut #
 		##########################
 
+		if self._optDebug: print "ProcessEntry: Calo-jet kinematic cut"
+
 		# reminder: the baseline 250 GeV and 2.0 eta cut is on calo-jet with NO muon correction
 
 		#
@@ -625,6 +647,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.MakeCutflowPlot(tree, "PassCaloJetMassCut", _isMC)
 
 		#
+		# pT upper bound (no muon correction)
+
+		if LeadCaloJet.p.Pt() > self._JetPtUpBound: return
+		if SubLeadCaloJet.p.Pt() > self._JetPtUpBound: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloJetPtUpBound", _isMC)
+		self.MakeCutflowPlot(tree, "PassCaloJetPtUpBound", _isMC)
+
+		#
 		# calo-jet dEta cuts
 		# 
 
@@ -640,7 +671,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Track-jet Reconstruction #
 		############################
 
+		if self._optDebug: print "ProcessEntry: Track-jet Reconstruction"
+
 		# INFO: Starting from hh4b-v00-v01-01, track-jet selection has already been applied when producing miniNtuple. So it becomes redundant to do it here
+
+		if self._optDebug: print "ProcessEntry: Before processing first track-jet"
 
 		AssocTrackJets_LeadCaloJet = []
 		for iTrackJet in range(tree.jet_ak2track_asso_pt[0].size()):
@@ -660,6 +695,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					TrackJet.Set("SF"+SFName, 1.)
 
 			AssocTrackJets_LeadCaloJet.append( TrackJet )
+
+		if self._optDebug: print "ProcessEntry: Before processing second track-jet"
 
 		AssocTrackJets_SubLeadCaloJet = []
 		for iTrackJet in range(tree.jet_ak2track_asso_pt[1].size()):
@@ -686,6 +723,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		##################
 		# Add Back Muons #
 		##################
+
+		if self._optDebug: print "ProcessEntry: Adding muon back"
 
 		Muons = []
 		for iMuon in range(tree.nmuon):
