@@ -16,11 +16,11 @@ treename = "XhhMiniNtuple"
 ###################
 
 # data
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_data.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_data.txt"
 
 # MC with Systematics
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets.txt"
 
 ########################
@@ -28,6 +28,20 @@ filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00
 ########################
 
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_inclusive.txt"
+
+###################
+# BTAG variations #
+###################
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10_BTAG70.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_BTAG70.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets_BTAG70.txt"
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10_BTAG85.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_BTAG85.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets_BTAG85.txt"
+
+
 
 ########################
 # btagging systematics #
@@ -246,7 +260,7 @@ def runShell():
 				cmd += " -l"
 			print "------> ",cmd
 			os.system(cmd)
-			time.sleep(1)
+			time.sleep(5)
 	else:
 		runSys(options.sysName, doLite=options.doLite, nworkers=options.nworkers)
 

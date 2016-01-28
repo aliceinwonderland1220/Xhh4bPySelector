@@ -80,4 +80,4 @@ def main(dirname, outputNameBase):
 		RunMerge(item, outputNameBase)
 
 if __name__ == "__main__":
-	main("outputSys", "hist_RSG_c10")
+	main("outputSys_Zjets", "hist_Zjets")

@@ -107,7 +107,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._MV2c20CutDict = {
 			"70": -0.3098,
-			"77": -0.6134,
+			"77": -0.6134,        # real 77 WP: -0.6134,
 			"85": -0.8433,
 		}
 

@@ -1,0 +1,3 @@
+/u/gl/zengq/nfs/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-02/BTAG_85/MiniNtuple_ttbar_allhad_BTAG85.root
+/u/gl/zengq/nfs/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-02/BTAG_85/MiniNtuple_ttbar_nonallhad_BTAG85.root
+/u/gl/zengq/nfs/Xhhbbbb_main/storage/MiniNtuple/hh4b-00-06-02/BTAG_85/MiniNtuple_ttbar_mtt_BTAG85.root

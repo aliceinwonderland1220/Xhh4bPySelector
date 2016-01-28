@@ -204,6 +204,20 @@ def ReadMetaData(hh4b_version, ibin=None):
 
 		print output
 
+# check if all systematics variation files are complete. Help to diagonize whether there is any unnoticed error during batch production
+def CheckSysNumber(dirName):
+	import subprocess
+	fileList = subprocess.check_output(['ls', dirName])
+	fileList = fileList.split('\n')
 
+	for fileName in fileList:
+		if ".root" not in fileName: continue
+
+		f = ROOT.TFile(dirName+"/"+fileName)
+		h = f.Get("GoodEvent_Cutflow/CountEntry_Initial")
+		
+		print fileName,h.GetBinContent(1)
+
+		f.Close()
 
 
