@@ -125,7 +125,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
 		self._Lumi = 3.20905          # Number for hh4b-v00-v06-00 -- not taken from GRL, bu re-calculated again with available dataset
@@ -136,11 +136,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._doMttStitch = True          # whether we do the mtt stitch
 		self._MttStitchCut = 1100.        # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.17957281423             # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.03680199             # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.188581478             # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.04229660105             # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 		self._JetPtUpBound = 1500.        # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties
+
+		self._Blind2bSRThreshold = 2000.          # we blind 2b SR events with di-jet mass above this threshold. None means no blinding
 
 		self._Apply2bSBReweight = False           # apply additional re-weighting on the 2b-SB region
 		self._Apply2bSBReweightFile = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-05-00/ReweightStorage.root"        # the file storing re-weighting functions
@@ -567,6 +569,24 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassGRL", _isMC)
 		self.MakeCutflowPlot(tree, "PassGRL", _isMC)
 
+		################
+		# Jet Cleaning #
+		################
+
+		passJetCleaning = True
+		for iAKT4 in range(tree.resolvedJets_pt.size()):
+			AKT4_pt = tree.resolvedJets_pt[iAKT4]
+			AKT4_passClean = tree.resolvedJets_clean_passLooseBad[iAKT4]
+
+			if AKT4_pt < 30.: continue   # resolved people use GeV 
+
+			passJetCleaning = (passJetCleaning and (AKT4_passClean == 1))
+
+		if not passJetCleaning: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassJetCleaning", _isMC)
+		self.MakeCutflowPlot(tree, "PassJetCleaning", _isMC)
+
 		#####################
 		# Calo-jet Business #
 		#####################
@@ -949,6 +969,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			PassBtagDict[WP] = content
 
+		# 2b SR blinding. Only for data
+		if not _isMC:
+			if PassBtagDict[self._MuonAddBackBtagWP]['Pass2b'] and PassSRMass:
+				if self._Blind2bSRThreshold is not None:
+					if self.histsvc.Get("DiJetMass") > self._Blind2bSRThreshold: return
+
 		# fill histogram for each ROI
 		for WP, PassBtags in PassBtagDict.items():
 			for PassBtagName, PassBtagDecision in PassBtags.items():
@@ -1136,6 +1162,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double("MV2c20"))
 
 	def PassMuonQualityCut(self, tree, iMuon):
+		# muon quality branches are stored exclusively!
 		if self._MuonQualityCut == "Tight":
 			return tree.muon_isTight[iMuon] == 1
 		elif self._MuonQualityCut == "Medium":

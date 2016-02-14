@@ -1,0 +1,7 @@
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/45/70/DAOD_EXOT8.07540343._000001.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/17/d5/DAOD_EXOT8.07540343._000002.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/bd/6b/DAOD_EXOT8.07540343._000004.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/36/50/DAOD_EXOT8.07540343._000005.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/fd/07/DAOD_EXOT8.07540343._000007.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/51/5d/DAOD_EXOT8.07540343._000008.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/0a/5b/DAOD_EXOT8.07540343._000009.pool.root.1

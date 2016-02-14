@@ -16,32 +16,32 @@ treename = "XhhMiniNtuple"
 ###################
 
 # data
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_data.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_data.txt"
 
 # MC with Systematics
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c10.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_Zjets.txt"
 
 ########################
 # Inclusive ttbar only #
 ########################
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_inclusive.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_ttbar_inclusive.txt"
 
 ###################
-# BTAG variations #
+# version control #
 ###################
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10_BTAG70.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_BTAG70.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets_BTAG70.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-01.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-01_50Obj.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-00.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-06-02.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-06-02_newxAH.txt"
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_RSG_c10_BTAG85.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_ttbar_BTAG85.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-06-02/hh4b_v00-06-02_Zjets_BTAG85.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
 
-
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
 
 ########################
 # btagging systematics #
@@ -192,7 +192,10 @@ def runSys(sysName, doLite=False, nworkers=0):
 	dictOptions = {
 	                "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/output%s" % (sysName.replace(" ", "_")),    # outputSys is hard-coded
 	                # "ChannelCut": 301495.,   # m1000
+	                # "ChannelCut": 301500,    # m1500
+	                # "ChannelCut": 301501,    # m1600
 	                # "ChannelCut": 301503.,   # m2000
+	                # "ChannelCut": 301505,    # m2500
 	                "BtagSys": (sysName if isBtagSys else ""),
 	                "OverlapTree": True,
 	                "Debug": False,
@@ -210,8 +213,8 @@ def runSys(sysName, doLite=False, nworkers=0):
 	if doLite:
 		address = "lite://"
 	else:
-		# address = "zengq@atlint04.slac.stanford.edu:21001"
-		address = "zengq@atlint03.slac.stanford.edu:21001"
+		address = "zengq@atlint04.slac.stanford.edu:21001"
+		# address = "zengq@atlint03.slac.stanford.edu:21001"
 	runProof(address, nworkers)
 
 	# also remember to remove option files afterward

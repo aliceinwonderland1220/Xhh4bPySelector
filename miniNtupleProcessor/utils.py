@@ -126,9 +126,12 @@ def GetRunNumberList(queryString):
 
 	return ','.join(RunNumberList_mergeobj)
 
+###################################################################################################################################################
 # merge metadata histogram 
 # Works on SLAC machine
 # format of hh4b_version should be something like hh4b-00-04-01
+###################################################################################################################################################
+
 def GetRSGMetaData(hh4b_version):
 	def ConvertVersionToNumber(v):
 		vSplit = v.split('-')[1:]
@@ -180,9 +183,12 @@ def GetRSGMetaData(hh4b_version):
 		print cmd
 		os.system(cmd)
 
+###################################################################################################################################################
 # print out metadata of RSG
 # hh4b_version should be something like 'hh4b_v00-04-01'
 # if you specify ibin, it is the bin number in metadata histogram
+###################################################################################################################################################
+
 def ReadMetaData(hh4b_version, ibin=None):
 	import subprocess
 	fileList = subprocess.check_output(['ls', 'data/'+hh4b_version])
@@ -204,7 +210,10 @@ def ReadMetaData(hh4b_version, ibin=None):
 
 		print output
 
-# check if all systematics variation files are complete. Help to diagonize whether there is any unnoticed error during batch production
+###################################################################################################################################################
+# check if all systematics variation files are complete. Help to diagonize whether there is any unnoticed error during batch production 
+###################################################################################################################################################
+
 def CheckSysNumber(dirName):
 	import subprocess
 	fileList = subprocess.check_output(['ls', dirName])
@@ -219,5 +228,59 @@ def CheckSysNumber(dirName):
 		print fileName,h.GetBinContent(1)
 
 		f.Close()
+
+###################################################################################################################################################
+# Generate a file-list for a data-set that is transferred to SLAC-ATLAS-T3_GRIDFTP
+###################################################################################################################################################
+
+def GetGridFileList(datasetname):
+	import subprocess
+
+	outputList = []
+	rawRucioOutput = subprocess.check_output(["rucio", "list-files", datasetname]).split("\n")
+	for line in rawRucioOutput:
+		if "pool.root" not in line: continue
+		GridFileName = line.split("|")[1].replace(" ","")
+		outputList.append(GridFileName)
+
+	return outputList
+
+def GenerateFileListR2D2(datasetname, RSE, outputFileName):
+	import subprocess
+
+	GridFileList = GetGridFileList(datasetname)
+	LocalFileList = []
+	for GridFileName in GridFileList:
+		rawRucio = subprocess.check_output(["rucio", "list-file-replicas", GridFileName]).split("\n")
+		for line in rawRucio:
+			if "pool.root" not in line: continue
+			if RSE not in line: continue
+
+			FilePathAndName = line.split("|")[5].split(":")[-1]
+			FilePathAndName = FilePathAndName[FilePathAndName.find("/"):]
+			FilePathAndName = FilePathAndName.replace(" ", "")
+
+			LocalFileList.append(FilePathAndName)
+			break
+
+	f = open(outputFileName, "w")
+	for LocalFileName in LocalFileList:
+		f.write("root://atlprf01.slac.stanford.edu:1094/"+LocalFileName+"\n")
+	f.close()
+
+def runGenerateFileListR2D2():
+	R2D2_FileList = open("data/EXOT8/mc_r2d2.txt")
+	for line in R2D2_FileList:
+		if "EXOT8" not in line: continue
+
+		line = line.split("\n")[0]
+		line = line.split("/")[0]
+
+		print "Processing",line,"..."
+		GenerateFileListR2D2(line, "SLAC-ATLAS-T3_GRIDFTP", "data/EXOT8/filelist_"+line+".txt")		
+
+
+
+
 
 

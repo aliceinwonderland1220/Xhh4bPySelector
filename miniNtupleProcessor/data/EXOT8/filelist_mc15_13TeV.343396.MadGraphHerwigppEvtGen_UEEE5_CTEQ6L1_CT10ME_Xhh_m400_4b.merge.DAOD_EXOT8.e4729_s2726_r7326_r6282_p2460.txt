@@ -1,0 +1,3 @@
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/67/3a/DAOD_EXOT8.07540352._000001.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/18/8a/DAOD_EXOT8.07540352._000003.pool.root.1
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/mc15_13TeV/70/18/DAOD_EXOT8.07540352._000004.pool.root.1
