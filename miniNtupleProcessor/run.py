@@ -20,6 +20,8 @@ treename = "XhhMiniNtuple"
 
 # MC with Systematics
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c10.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c20.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_2HDM.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_ttbar.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_Zjets.txt"
 
@@ -40,8 +42,6 @@ treename = "XhhMiniNtuple"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-06-02_newxAH.txt"
 
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
-
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
 
 ########################
 # btagging systematics #
