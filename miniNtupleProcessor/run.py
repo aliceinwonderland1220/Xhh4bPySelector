@@ -6,6 +6,7 @@ import os
 import json
 from optparse import OptionParser
 import subprocess
+import sys
 
 ROOT.gROOT.SetBatch(True)
 
@@ -16,32 +17,29 @@ treename = "XhhMiniNtuple"
 ###################
 
 # data
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_data.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_data.txt"
 
 # MC with Systematics
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c10.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c20.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_2HDM.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_ttbar.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_Zjets.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_RSG_c10.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_RSG_c20.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_2HDM.txt"
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_Zjets.txt"
 
 ########################
 # Inclusive ttbar only #
 ########################
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_ttbar_inclusive.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_ttbar_inclusive.txt"
 
-###################
-# version control #
-###################
+########
+# test #
+########
 
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-01.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-01_50Obj.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-07-00.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-06-02.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_data_periodD_00-06-02_newxAH.txt"
-
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_test.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_btag77CDI70.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c10.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_No50MassCut.txt"
 
 ########################
 # btagging systematics #
@@ -162,15 +160,30 @@ def runProof(address, nworkers=0):
 def runSys(sysName, doLite=False, nworkers=0):
 	print "Running over systematic \'%s\'" % (sysName)
 
-	if sysName == "Nominal":
-		sysName = ""
-
-	# a very stupid hard-coding ...
-	if "FT_EFF_extrapolation_from_charm" in sysName:
-		sysName = "FT_EFF_extrapolation from charm" + "__" + sysName.split("__")[1]
-
 	# whether this is a b-tagging systematics
-	isBtagSys = (sysName[:3] == "FT_")
+	isBtagSys = True
+	sysNameItemList = []
+	for sysNameItem in sysName.split(","):
+		# a very stupid hard-coding ...
+		if "FT_EFF_extrapolation_from_charm" in sysNameItem:
+			sysNameItem = "FT_EFF_extrapolation from charm" + "__" + sysNameItem.split("__")[1]
+
+		# special handle on Nominal
+		if sysNameItem == "Nominal":
+			sysNameItem = ""
+
+		sysNameItemList.append(sysNameItem)
+
+		isBtagSys = (isBtagSys and ((sysNameItem=="") or (sysNameItem[:3]=="FT_")) )
+
+	# restore sysName
+	sysName = ",".join(sysNameItemList)
+
+	print "Restored sysName:",sysName
+
+	if (not isBtagSys) and ("," in sysName):
+		print "ERROR! Please do not run FT systematics and non-FT systematics all at once! Aborting ..."
+		sys.exit(0)
 
 	# setup treename
 	global treename
@@ -190,14 +203,19 @@ def runSys(sysName, doLite=False, nworkers=0):
 	fOptions = open("options.json", "w")
 	######################################################################
 	dictOptions = {
-	                "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/output%s" % (sysName.replace(" ", "_")),    # outputSys is hard-coded
+	                # "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/output%s" % (sysName.replace(" ", "_")),    # outputSys is hard-coded
+	                "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
 	                # "ChannelCut": 301495.,   # m1000
 	                # "ChannelCut": 301500,    # m1500
 	                # "ChannelCut": 301501,    # m1600
-	                # "ChannelCut": 301503.,   # m2000
+	                "ChannelCut": 301503.,   # m2000
 	                # "ChannelCut": 301505,    # m2500
 	                "BtagSys": (sysName if isBtagSys else ""),
+	                "IsBtagSys": isBtagSys,
+	                "TinyTree": True,
 	                "OverlapTree": True,
+	                "SaveTreeAt": "",
+	                "SaveMemory": True,
 	                "Debug": False,
 	              }
 	######################################################################
@@ -227,13 +245,14 @@ def runShell():
 	parser.add_option("-s", "--sysName", dest="sysName", help="Systematics name to be considered", type="string", default="Nominal")
 	parser.add_option("-l", "--doLite", action="store_true", dest="doLite", help="Whether use lite proof", default=False)
 	parser.add_option("-n", "--nworkers", dest="nworkers", help="Number of workers to be used", type="int", default=0)
+	parser.add_option("-m", "--nworkers_nonbtag", dest="nworkers_nonbtag", help="Number of workers to be used, when processing non-btag systematics", type="int", default=0)
 	(options, args) = parser.parse_args()
 
 	if options.allSys:
+		print "Removing outputSys ..."
 		os.system("rm -rf outputSys")
 
-		sysList = [
-		           "Nominal", 
+		nonbtagSysList = [
 		           "JET_Hbb_Run1_pT__1up", 
 		           "JET_Hbb_Run1_pT__1down", 
 		           "JET_Hbb_Run1_mass__1up",
@@ -246,24 +265,36 @@ def runShell():
 		           "JET_JMR",
 		          ]
 
+		btagSysList = []
 		for item in FT_SysNameList:
-			if item == "":
-				continue
-			# item_shortcut = item.split("__")[0].replace(" ", "_")
 			item_shortcut = item.replace(" ", "_")
-			if item_shortcut not in sysList:
-				sysList.append(item_shortcut)
+			if item_shortcut not in btagSysList:
+				btagSysList.append(item_shortcut)
+
+		# put b-tagging first
+		sysList = [",".join(btagSysList)] + nonbtagSysList
+		# sysList = nonbtagSysList
 
 		print "Batch processing systematics list:"
 		print sysList
 
-		for sysName in sysList:
-			cmd = "python run.py -s %s -n %s" % (sysName, options.nworkers)
+		for isys, sysName in enumerate(sysList):
+			if sysName in nonbtagSysList:
+				nActualWorkers = options.nworkers_nonbtag
+			else:
+				nActualWorkers = options.nworkers
+
+			cmd = "python run.py -s %s -n %s" % (sysName, nActualWorkers)
 			if options.doLite:
 				cmd += " -l"
 			print "------> ",cmd
 			os.system(cmd)
-			time.sleep(5)
+
+			if isys == 0:
+				# after finishing b-tagging long-run, we wait for one minute
+				time.sleep(60)
+			else:
+				time.sleep(5)
 	else:
 		runSys(options.sysName, doLite=options.doLite, nworkers=options.nworkers)
 

@@ -39,7 +39,9 @@ class PySelectorBase (ROOT.TPySelector):
     # Default option values.
     # These can be changed in a sub-class __init__
     # or with an options file created by ntProcess.
-    self.histfile= "hist.root"
+    self.histfileList = []            # filename list
+    self.proofoutputfileList = []     # proof output file list
+    self.outputfileList = []           # the actual file object list
     self.printInterval= 1000
     self.variables= None
     self.treeAccessor= 2   # 0=no accessor, 1=protect against unread vars, 2=also cache branch addresses
@@ -65,8 +67,12 @@ class PySelectorBase (ROOT.TPySelector):
 
     # need to create output file here, due to the usage of AutoHists
     # IMPORTANT: You need to do the merging yourself! Use TProofOutputFile
-    self.proofoutputfile = ROOT.TProofOutputFile(self.histfile, "M")
-    self.outputfile = self.proofoutputfile.OpenFile("RECREATE")
+    for histfile in self.histfileList:
+      proofoutputfile = ROOT.TProofOutputFile(histfile, "M")
+      outputfile = proofoutputfile.OpenFile("RECREATE")
+
+      self.proofoutputfileList.append(proofoutputfile)
+      self.outputfileList.append(outputfile)
 
     self.BookHistograms()
     self.GetOutputList().ls()
@@ -85,13 +91,18 @@ class PySelectorBase (ROOT.TPySelector):
     print "In SlaveTerminate"
 
     self.Log ("slave terminating after %d entries" % self.entryCount)
-    self.outputfile.Write()
 
-    self.GetOutputList().Add(self.proofoutputfile)
+    for outputfile in self.outputfileList:
+      outputfile.Write()
+
+    for proofoutputfile in self.proofoutputfileList:
+      self.GetOutputList().Add(proofoutputfile)
 
   def Terminate (self):
     self.Log ("terminating")
-    self.Log ("write output to",self.histfile)
+    for histfile in self.histfileList:
+      self.Log ("write output to",histfile)
+
     # f= ROOT.TFile(self.histfile,"recreate")
     # for o in self.GetOutputList():
     #   self.Log ("write",o.__class__.__name__+"::"+o.GetName())

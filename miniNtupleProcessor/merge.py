@@ -54,7 +54,8 @@ def GetDirList(dirname):
 	return dirListToMerge
 
 # input dirname here should be the output from GetDirList
-def RunMerge(dirname, outputNameBase):
+# assuming outputDir has been well-prepared
+def RunMerge(dirname, outputNameBase, outputDir):
 	rank = _comm.Get_rank()
 
 	sysName = dirname.split("/")[1][6:]   # skip beginning "output"
@@ -64,20 +65,25 @@ def RunMerge(dirname, outputNameBase):
 	else:
 		outputName = outputNameBase + "_" + sysName + ".root"
 
-	cmd = "hadd -f %s %s/0.*/*.root" % (outputName, dirname)
+	cmd = "hadd -f %s/%s %s/0.*/*.root" % (outputDir, outputName, dirname)
 
 	print "Processor %i: Running command %s" % (rank, cmd)
 	os.system(cmd)
 
 # dirname here should be the same as the one of GetDirList()
-def main(dirname, outputNameBase):
+def main(dirname, outputNameBase, outputDir):
 	rank = _comm.Get_rank()
+
+	# clear and create new outputDir
+	os.system("rm -rf "+outputDir)
+	os.system("mkdir "+outputDir)
 
 	dirListToMerge = GetDirList(dirname)
 	print "Processor %i: dir to be processed: %s" % (rank, dirListToMerge)
 
 	for item in dirListToMerge:
-		RunMerge(item, outputNameBase)
+		RunMerge(item, outputNameBase, outputDir)
 
 if __name__ == "__main__":
-	main("outputSys_2HDM", "hist_2HDM")
+	sampleName = "RSG_c10_No50MassCut"
+	main("outputSys_"+sampleName, "hist_"+sampleName, "hist_%s_reduced" % (sampleName))

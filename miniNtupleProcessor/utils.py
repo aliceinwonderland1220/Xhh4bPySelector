@@ -183,6 +183,23 @@ def GetRSGMetaData(hh4b_version):
 		print cmd
 		os.system(cmd)
 
+# hadd all samples in all dataset in specified directory
+def DirtyHadd(baseDir):
+	tmpDir = "Metadata_tmp"
+	os.system("rm -rf "+tmpDir)
+	os.system("mkdir -p "+tmpDir)
+
+	import subprocess
+	datasetList = subprocess.check_output(["ls", baseDir]).split("\n")[:-1]   # remove the last empty string
+	for datasetName in datasetList:
+		channelNumber = int(datasetName.split(".")[3])   # this is very specific to MiniNtuple format
+		outputFileName = "%s/Metadata_RSG_%s_M%s.root" % (tmpDir, dict_RSG_channelNumber_Mass[channelNumber][0], dict_RSG_channelNumber_Mass[channelNumber][1])
+		cmd = "hadd -f %s %s" % (outputFileName, baseDir+"/"+datasetName+"/"+"*.root*")
+		
+		print cmd
+		os.system(cmd)
+
+
 ###################################################################################################################################################
 # print out metadata of RSG
 # hh4b_version should be something like 'hh4b_v00-04-01'
@@ -209,6 +226,25 @@ def ReadMetaData(hh4b_version, ibin=None):
 			output += "%f (%s) " % (h.GetBinContent(i), h.GetXaxis().GetBinLabel(i))
 
 		print output
+
+# simply read all metadata files in a specified directories
+def ReadMetaData2(baseDir, ibin=None):
+	if ibin == None:
+		ibin = 1
+
+	import subprocess
+	fileList = subprocess.check_output(["ls", baseDir]).split("\n")[:-1]   # remove the last empty string
+
+	for iFile, fileName in enumerate(fileList):
+		f = ROOT.TFile(baseDir+"/"+fileName)
+		h = f.Get("MetaData_EventCount")
+
+		if iFile == 0:
+			binlabel = h.GetXaxis().GetBinLabel(ibin)
+			print "=====> You are checking:",binlabel
+
+		print fileName,":",h.GetBinContent(ibin)
+
 
 ###################################################################################################################################################
 # check if all systematics variation files are complete. Help to diagonize whether there is any unnoticed error during batch production 
