@@ -101,6 +101,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._optOverlapTree = self._dictOptions.get("OverlapTree", False)
 		self._optSaveTreeAt  = self._dictOptions.get("SaveTreeAt",  "ALL")
 		self._optSaveMemory  = self._dictOptions.get("SaveMemory",  False)
+		self._optPeekdEta    = self._dictOptions.get("PeekdEta",    False)
 		self._optDebug       = self._dictOptions.get("Debug",       False)
 
 		# convert unicode (probably from the json file) to str
@@ -163,7 +164,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MttScale_allhad = 1.18736481997            # the scale factor applied on allhad mtt slices when doing stitching
 		self._MttScale_nonallhad = 1.0408594083             # the scale factor applied on nonallhad mtt slices when doing stitching
 
-		self._JetMassCut = 0.1  # touch 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
+		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 		self._JetPtUpBound = 1500.        # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties
 
 		self._Blind2bSRThreshold = 2000.          # we blind 2b SR events with di-jet mass above this threshold. None means no blinding
@@ -719,11 +720,32 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassCaloJetPtUpBound", _isMC)
 		self.MakeCutflowPlot(tree, "PassCaloJetPtUpBound", _isMC)
 
+		# 
+		# look at calo-jet dEta distribution before cuts
+		# 
+
+		if self._optPeekdEta:
+			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "dEta", LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta(), self._EvtWeight[0], 80, -4, 4)
+
+			chi2 = ROOT.TMath.Exp(2*abs(LeadCaloJet.p.Rapidity() - SubLeadCaloJet.p.Rapidity()))
+			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "CosTheta", (chi2-1)/(chi2+1), self._EvtWeight[0], 60, -1, 2)
+
+			DiJetSys = LeadCaloJet.p + SubLeadCaloJet.p
+			LeadCaloJetp4_COM = ROOT.TLorentzVector(LeadCaloJet.p)
+			SubLeadCaloJetp4_COM = ROOT.TLorentzVector(SubLeadCaloJet.p)
+
+			LeadCaloJetp4_COM.Boost(-DiJetSys.BoostVector())
+			SubLeadCaloJetp4_COM.Boost(-DiJetSys.BoostVector())
+
+			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "CosTheta_Lead", LeadCaloJetp4_COM.Vect().CosTheta(), self._EvtWeight[0], 60, -1, 2)
+			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "CosTheta_SubLead", SubLeadCaloJetp4_COM.Vect().CosTheta(), self._EvtWeight[0], 60, -1, 2)
+
 		#
 		# calo-jet dEta cuts
 		# 
 
 		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.7)
+		# PassdEtaCut = True    # touch --> check the variation of turning off dEta cut
 
 		if not PassdEtaCut:
 			return
@@ -1226,6 +1248,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.AutoFill("GoodEvent", "_Cutflow", "Xhh_ChannelNumber_CountEntry_%s" % (cutName), tree.mcChannelNumber, 1, 21, 343393.5, 343414.5)
 			histsvc.AutoFill("GoodEvent", "_Cutflow", "Xhh_ChannelNumber_CountWeight_%s" % (cutName), tree.mcChannelNumber, self._EvtWeight[0]*extraWeight, 21, 343393.5, 343414.5)
 	
+	def FillOneVarForAllSignal(self, tree, isMC, folderName, histNamePrefix, *histsvcOptions):
+		for btagSysName in self._btagSysList:
+			histsvc = self.histsvc[btagSysName]['histsvc']
+
+			histNameAppendix = ("_"+str(tree.mcChannelNumber) if isMC else "")
+			histsvc.AutoFill("GoodEvent", "_"+folderName, histNamePrefix + histNameAppendix, *histsvcOptions)
+
 	def FillTrackJetVars(self, TrackJet, TrackJetName):
 		for btagSysName in self._btagSysList:
 			histsvc = self.histsvc[btagSysName]['histsvc']

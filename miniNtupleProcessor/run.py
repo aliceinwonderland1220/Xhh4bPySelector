@@ -21,7 +21,7 @@ treename = "XhhMiniNtuple"
 
 # MC with Systematics
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_RSG_c10.txt"
-# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_RSG_c20.txt"
+filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_RSG_c20.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_2HDM.txt"
 
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_ttbar.txt"
@@ -39,7 +39,7 @@ treename = "XhhMiniNtuple"
 
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_btag77CDI70.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_RSG_c10.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_No50MassCut.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/filelist_RSG_c10_No50MassCut.txt"
 
 ########################
 # btagging systematics #
@@ -204,19 +204,20 @@ def runSys(sysName, doLite=False, nworkers=0):
 	######################################################################
 	dictOptions = {
 	                # "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/output%s" % (sysName.replace(" ", "_")),    # outputSys is hard-coded
-	                "OutputDir" : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
+	                "OutputDir"   : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
 	                # "ChannelCut": 301495.,   # m1000
 	                # "ChannelCut": 301500,    # m1500
 	                # "ChannelCut": 301501,    # m1600
-	                "ChannelCut": 301503.,   # m2000
+	                # "ChannelCut": 301503.,   # m2000
 	                # "ChannelCut": 301505,    # m2500
-	                "BtagSys": (sysName if isBtagSys else ""),
-	                "IsBtagSys": isBtagSys,
-	                "TinyTree": True,
-	                "OverlapTree": True,
-	                "SaveTreeAt": "",
-	                "SaveMemory": True,
-	                "Debug": False,
+	                "BtagSys"     : (sysName if isBtagSys else ""),
+	                "IsBtagSys"   : isBtagSys,
+	                "TinyTree"    : True,
+	                "OverlapTree" : True,
+	                "SaveTreeAt"  : "",
+	                "SaveMemory"  : True,
+	                "PeekdEta"    : False,
+	                "Debug"       : False,
 	              }
 	######################################################################
 	json.dump(dictOptions, fOptions)

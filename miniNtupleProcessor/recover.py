@@ -112,5 +112,5 @@ def batch(sampleName):
 		ExpandReducedToAux(inputDir, baseName, outputDir)
 
 if __name__ == "__main__":
-	batch("RSG_c10_No50MassCut")
+	batch("RSG_c20_NodEtaCut")
 

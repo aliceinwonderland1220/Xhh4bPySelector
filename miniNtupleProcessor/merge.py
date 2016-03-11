@@ -85,5 +85,5 @@ def main(dirname, outputNameBase, outputDir):
 		RunMerge(item, outputNameBase, outputDir)
 
 if __name__ == "__main__":
-	sampleName = "RSG_c10_No50MassCut"
+	sampleName = "RSG_c20_NodEtaCut"
 	main("outputSys_"+sampleName, "hist_"+sampleName, "hist_%s_reduced" % (sampleName))
