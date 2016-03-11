@@ -150,7 +150,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._MuonAddBackBtagWP = "77"           # the b-tagging working point for track-jet considered for muon adding back; Also used as nominal WP for anything
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-00/hh4b_v00-07-00_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/hh4b_v00-07-03/hh4b_v00-07-03_Xsection.config"
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
 		self._Lumi = 3.20905          # Number for hh4b-v00-v06-00 -- not taken from GRL, bu re-calculated again with available dataset
