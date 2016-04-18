@@ -1,0 +1,2 @@
+/nfs/slac/g/atlas/u01/users/zengq/Xhhbbbb_main/trunk/submitDir_ttbar_allhad/data-MiniNTuple/filelist_ttbar_allhad.root
+/nfs/slac/g/atlas/u01/users/zengq/Xhhbbbb_main/trunk/submitDir_ttbar_nonallhad/data-MiniNTuple/filelist_ttbar_nonallhad.root
