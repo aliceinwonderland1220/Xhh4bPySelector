@@ -202,6 +202,8 @@ def GenerateXsectionTable(scanDir, outputName):
 	PMGFileList = [
 	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Exotics_Other_Download.txt",
 	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Multijet_Download.txt",
+	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Wjets_Other_Download.txt",
+	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Zjets_Other_Download.txt",
 	              ]
 	PMGTool.ReadData(PMGFileList)
 
@@ -233,6 +235,7 @@ def GenerateXsectionTable(scanDir, outputName):
 		if "JZXW" in scanDir:
 			print "WARNING! You are using number of entries instead of sum of weights. This should only happen for JZXW sample!"
 			n = h.GetBinContent(1)    # number of entries before derivation
+			# n = h.GetBinContent(3)
 		else:
 			n = h.GetBinContent(3)    # sum of weights before derivation
 

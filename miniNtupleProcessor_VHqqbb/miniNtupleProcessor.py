@@ -128,53 +128,77 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# physics options #
 		###################
 
+		# generic global options
+
 		self._MV2c20CutDict = {
 			"70": -0.3098,
 			"77": -0.6134,
 			"85": -0.8433,
 		}
 
+		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = True                       # whether we blind the data
+		self._doJERStudy  = False                      # turn on JERStudy --- basically the truth response stuffs
+		self._VHAmbiguityScheme = 1 # touch            # How to solve V/H ambiguity:
+		                                               # 1: based on V-tagging / anti-V-tagging
+		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
+		                                               # 3: same as 2, but requires at least 1 b-tag in Higgs-tagging definition
 
-		self._TriggerList = ["HLT_j360_a10r_L1J100"]   # only fat-jet trigger since v00-05-00 !
-		self._doTriggerCut = True                      # When one wants to do the trigger study, make sure this option is turned OFF !
+		self._ChannelNumberList = sorted(range(302316, 302340+1) + range(302366, 302390+1))      # from small to large
+		self._ChannelNumberDict = defaultdict(lambda: -1)
+		for index in range(len(self._ChannelNumberList)):
+			self._ChannelNumberDict[self._ChannelNumberList[index]] = index                      # build map of channelnumber -> index
 
-		self._TrackJetPtCut = 10.
-		self._TrackJetEtaCut = 2.5
-		self._TrackJetWP = "70" # "77"  touch          # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
-		self._ResetSF = True                           # if True, then SF all reset to 1.
-
-		self._doMuonCorrection = True
-		self._MuonPtCut = 4.
-		self._MuonEtaCut = 2.5
-		self._MuonQualityCut = "Medium"          # Medium!
-
-		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_Xsection.config"
+		# Luminosity
 
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"
 		self._Lumi = 3.20905          # Number for hh4b-v00-v06-00 -- not taken from GRL, bu re-calculated again with available dataset
 		                              # https://atlas-lumicalc.cern.ch/results/194877/result.html
 		                              # iLumiCalc.exe --lumitag=OflLumi-13TeV-003 --livetrigger=L1_EM12 --trigger=None --xml=/tmp/lumifiles/194877/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml --lar --lartag=LARBadChannelsOflEventVeto-RUN2-UPD4-04 -r 279932-280422,281130-281411,276073-276954,282625-284484,278727-279928,280423-281075
 
-		self._ForceDataMC = None     # Force to run in either "Data" or "MC". This should be set as None most of the time.
+		# X-section
+
+		self._ApplyXsecWeight = True
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_Xsection.config"
+
+		# Mtt stitching
 
 		self._doMttStitch = False                  # whether we do the mtt stitch
 		self._MttStitchCut = 1100.                 # the cut on inclusive ttbar sample of mtt value
 		self._MttScale_allhad = 1.0                # the scale factor applied on allhad mtt slices when doing stitching
 		self._MttScale_nonallhad = 1.0             # the scale factor applied on nonallhad mtt slices when doing stitching
 
-		self._JetMassCut = 50.            # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
-		self._JetPtUpBound = 1e9 #1500. touch        # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
+		# trigger
 
-		self._doDETACut = False # touch          # whether we apply delta eta cut
+		self._TriggerList = ["HLT_j360_a10r_L1J100"]   # only fat-jet trigger since v00-05-00 !
+		self._doTriggerCut = True                      # When one wants to do the trigger study, make sure this option is turned OFF !
 
-		self._doJERStudy = False          # turn on JERStudy --- basically the truth response stuffs
+		# calo-jet
 
-		self._ChannelNumberList = sorted(range(301216, 302340+1) + range(302366, 302390+1))      # from small to large
-		self._ChannelNumberDict = defaultdict(lambda: -1)
-		for index in range(len(self._ChannelNumberList)):
-			self._ChannelNumberDict[self._ChannelNumberList[index]] = index         # build map of channelnumber -> index
+		self._JetMassCut   = 50.                     # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
+		self._JetPtUpBound = 1e9 #1500.              # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
+		self._doDETACut    = False                   # whether we apply delta eta cut
+		self._HiggsMassCut = (75, 145) #touch        # Standard Loose: 75~145, ~90%
+		                                             # Standard Tight: 90~135, ~68%
+		self._WZWP = "Medium"      # touch           # working point for W/Z tagging
+
+		# track-jet
+
+		self._TrackJetPtCut = 10.
+		self._TrackJetEtaCut = 2.5
+		self._TrackJetWP = "70" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
+		self._ResetSF = True                           # if True, then SF all reset to 1.
+
+		# muon correction
+
+		self._doMuonCorrection = True
+		self._MuonPtCut = 4.
+		self._MuonEtaCut = 2.5
+		self._MuonQualityCut = "Medium"      
+
+		#######################
+		# External Tool Setup #
+		#######################
 
 		#
 		# PRW
@@ -226,6 +250,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "EventWeight",
 		                       "ChannelNumber",
 		                       "nPassBtag",
+		                       "VHAmbiguityCategory",
 		                       ]
 
 		self.EventVarListPython__kinematic = [
@@ -241,6 +266,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "HCandidateJetD2",
 		                       "HCandidateJetTau21",
 		                       "HCandidateJetTau21WTA",
+		                       "HCandidateJetNTrack",
 
 		                       "VCandidateJetPt",
 		                       "VCandidateJetEta",
@@ -249,6 +275,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "VCandidateJetD2",
 		                       "VCandidateJetTau21",
 		                       "VCandidateJetTau21WTA",
+		                       "VCandidateJetNTrack",
 
 		                       "dRjj_HCandidateJet",
 		                       "dRjj_VCandidateJet",
@@ -262,6 +289,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "SubLeadTrackJet_HCandidateJet_Eta",
 		                       "LeadTrackJet_VCandidateJet_Eta",
 		                       "SubLeadTrackJet_VCandidateJet_Eta",
+
+		                       "LeadTrackJet_HCandidateJet_MV2c20",
+		                       "SubLeadTrackJet_HCandidateJet_MV2c20",
+		                       "LeadTrackJet_VCandidateJet_MV2c20",
+		                       "SubLeadTrackJet_VCandidateJet_MV2c20",
 		                     ]
 
 		self.EventVarListPython = self.EventVarListPython__base + self.EventVarListPython__kinematic
@@ -337,6 +369,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		histsvc.Book("HCandidateJetD2", "HCandidateJetD2", self._EvtWeight, 40, 0, 8)
 		histsvc.Book("HCandidateJetTau21", "HCandidateJetTau21", self._EvtWeight, 30, 0, 1.5)
 		histsvc.Book("HCandidateJetTau21WTA", "HCandidateJetTau21WTA", self._EvtWeight, 30, 0, 1.5)
+		histsvc.Book("HCandidateJetNTrack", "HCandidateJetNTrack", self._EvtWeight, 100, -0.5, 99.5)
 
 		histsvc.Book("VCandidateJetPt", "VCandidateJetPt", self._EvtWeight, 60, 100, 1300)
 		histsvc.Book("VCandidateJetEta", "VCandidateJetEta", self._EvtWeight, 24, -3.0, 3.0)
@@ -345,6 +378,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		histsvc.Book("VCandidateJetD2", "VCandidateJetD2", self._EvtWeight, 40, 0, 8)
 		histsvc.Book("VCandidateJetTau21", "VCandidateJetTau21", self._EvtWeight, 30, 0, 1.5)
 		histsvc.Book("VCandidateJetTau21WTA", "VCandidateJetTau21WTA", self._EvtWeight, 30, 0, 1.5)
+		histsvc.Book("VCandidateJetNTrack", "VCandidateJetNTrack", self._EvtWeight, 100, -0.5, 99.5)
 
 		if not self._optSaveMemory:
 			histsvc.Book("HCandidateJetM_VCandidateJetM", "HCandidateJetM", "VCandidateJetM", self._EvtWeight, 100, 0, 5000, 100, 0, 5000)
@@ -353,7 +387,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		histsvc.Book("DiJetDeltaPhi", "DiJetDeltaPhi", self._EvtWeight, 70, 0, 3.5)
 		histsvc.Book("DiJetDeltaEta", "DiJetDeltaEta", self._EvtWeight, 80, -4, 4)
 		histsvc.Book("DiJetDeltaR", "DiJetDeltaR", self._EvtWeight, 100, 0, 5)
-		histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 100, 0, 5000)
+		histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 160, 0, 8000)
 
 		histsvc.Book("dRjj_HCandidateJet", "dRjj_HCandidateJet", self._EvtWeight, 75, 0, 1.5)
 		histsvc.Book("dRjj_VCandidateJet", "dRjj_VCandidateJet", self._EvtWeight, 75, 0, 1.5)
@@ -600,18 +634,38 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet = ROOT.TLorentzVector()
 		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
 		LeadCaloJet = ROOT.Particle(LeadCaloJet)
-		LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[0] == 3) or (tree.hcand_boosted_Ztag_medium[0] == 3))   # W/Z, mass+D2 cut, medium
+		if self._WZWP == "Medium":
+			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[0] == 3) or (tree.hcand_boosted_Ztag_medium[0] == 3))   # W/Z, mass+D2 cut, medium
+		elif self._WZWP == "Tight":
+			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[0] == 3) or (tree.hcand_boosted_Ztag_tight[0] == 3))   # W/Z, mass+D2 cut, tight
+		else:
+			print "ERROR! Unrecognized WZ Workign point:",self._WZWP
+			sys.exit(0)
 		LeadCaloJet.Set("D2", tree.hcand_boosted_D2[0])
 		LeadCaloJet.Set("Tau21", tree.hcand_boosted_Tau21[0])
 		LeadCaloJet.Set("Tau21WTA", tree.hcand_boosted_Tau21WTA[0])
+		LeadCaloJet.Set("nTrack", tree.hcand_boosted_nTrack[0])
+		LeadCaloJet.Set("nHBosons", tree.hcand_boosted_nHBosons[0])
+		LeadCaloJet.Set("nWBosons", tree.hcand_boosted_nWBosons[0])
+		LeadCaloJet.Set("nZBosons", tree.hcand_boosted_nZBosons[0])
 
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
-		SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[1] == 3) or (tree.hcand_boosted_Ztag_medium[1] == 3))  # W/Z, mass+D2 cut, medium
+		if self._WZWP == "Medium":
+			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[1] == 3) or (tree.hcand_boosted_Ztag_medium[1] == 3))  # W/Z, mass+D2 cut, medium
+		elif self._WZWP == "Tight":
+			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[1] == 3) or (tree.hcand_boosted_Ztag_tight[1] == 3))  # W/Z, mass+D2 cut, tight
+		else:
+			print "ERROR! Unrecognized WZ Working point:",self._WZWP
+			sys.exit(0)
 		SubLeadCaloJet.Set("D2", tree.hcand_boosted_D2[1])
 		SubLeadCaloJet.Set("Tau21", tree.hcand_boosted_Tau21[1])
 		SubLeadCaloJet.Set("Tau21WTA", tree.hcand_boosted_Tau21WTA[1])
+		SubLeadCaloJet.Set("nTrack", tree.hcand_boosted_nTrack[1])
+		SubLeadCaloJet.Set("nHBosons", tree.hcand_boosted_nHBosons[1])
+		SubLeadCaloJet.Set("nWBosons", tree.hcand_boosted_nWBosons[1])
+		SubLeadCaloJet.Set("nZBosons", tree.hcand_boosted_nZBosons[1])
 
 		CaloJetList = [LeadCaloJet, SubLeadCaloJet]
 
@@ -708,26 +762,37 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
 
 		#
-		# V-tagging cut: one v-tagged, one anti-v-tagged (remove VV-tagged to avoid overlap with VV search)
+		# some quick calo-jet kineamtics distribution BEFORE V-tagging
 		#
 
-		PassVtagCut = (LeadCaloJet.Double("WZTagged") != SubLeadCaloJet.Double("WZTagged"))
+		for btagSysName in self._btagSysList:
+			histsvc = self.histsvc[btagSysName]['histsvc']
 
-		if not PassVtagCut: return
-
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVtagCut", _isMC)
-		self.MakeCutflowPlot(tree, "PassVtagCut", _isMC)
+			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
 
 		#
-		# Determine V-candidate and the left-over is H-candidate automatically
+		# At least one calo-jet should be V-tagged
 		#
 
-		if LeadCaloJet.Double("WZTagged") == 1:
-			VCandidateJet = LeadCaloJet
-			HCandidateJet = SubLeadCaloJet
-		else:
-			VCandidateJet = SubLeadCaloJet
-			HCandidateJet = LeadCaloJet
+		PassAtLeastOneVtag = (LeadCaloJet.Double("WZTagged") == 1) or (SubLeadCaloJet.Double("WZTagged") == 1)
+
+		if not PassAtLeastOneVtag: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassAtLeastOneVtag", _isMC)
+		self.MakeCutflowPlot(tree, "PassAtLeastOneVtag", _isMC)
+
+		#
+		# some quick calo-jet kineamtics distribution AFTER V-tagging
+		#
+
+		for btagSysName in self._btagSysList:
+			histsvc = self.histsvc[btagSysName]['histsvc']
+
+			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
 
 
 		############################
@@ -786,13 +851,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			SubLeadCaloJet.Add("AssocTrackJets", TrackJet)
 
-		####################################
-		# Add Back Muons for HCandidateJet #
-		####################################
+		#################################
+		# Associate Muons to Track-jets #
+		# No muon correction here!      #
+		#################################
 
-		if self._optDebug: print "ProcessEntry: Adding muon back for HCandidateJet"
+		if self._optDebug: print "ProcessEntry: Associating Muons to track-jets. Attention: No muon correction done here!"
 
-		CaloJetListForMuonCorrection = [ HCandidateJet ]
+		CaloJetListForMuonCorrection = [ LeadCaloJet, SubLeadCaloJet ]
 		TrackJetListForMuonCorrection = []
 		for CaloJet in CaloJetListForMuonCorrection: TrackJetListForMuonCorrection += [ TrackJet for TrackJet in CaloJet.ObjVec("AssocTrackJets") ]
 
@@ -832,7 +898,159 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 						MatchTrackJet.Set("MuonAssocIndex", iMuon)
 						MatchTrackJet.Set("MuonAssocDR", MatchTrackJetDR)
 
-		for iCaloJet, CaloJet in enumerate(CaloJetListForMuonCorrection):
+
+		###########################
+		# Now solve V/H ambiguity #
+		###########################
+
+		# V/H ambiguity category
+
+		VHAmbiguityCategory = -1   # -1: initialized value
+		                           # 0 : ambiguous that one has to resort to mass distance
+		                           # 1 : unambiguous by using V/H-tagging 
+
+		if self._VHAmbiguityScheme == 1:
+			#
+			# one v-tagged, one anti-v-tagged
+			#
+
+			PassVtagCut = (LeadCaloJet.Double("WZTagged") != SubLeadCaloJet.Double("WZTagged"))
+			if not PassVtagCut: return
+
+			VHAmbiguityCategory = 1
+
+			#
+			# Determine V-candidate and the left-over is H-candidate automatically
+			#
+
+			if LeadCaloJet.Double("WZTagged") == 1:
+				VCandidateJet = LeadCaloJet
+				HCandidateJet = SubLeadCaloJet
+			else:
+				VCandidateJet = SubLeadCaloJet
+				HCandidateJet = LeadCaloJet
+
+		elif self._VHAmbiguityScheme in [2, 3]:
+			# Higgs tagging first
+			LeadCaloJet_Htag    = self.HiggsTagging(LeadCaloJet, Muons, self._HiggsMassCut, self._VHAmbiguityScheme == 3)
+			SubLeadCaloJet_Htag = self.HiggsTagging(SubLeadCaloJet, Muons, self._HiggsMassCut, self._VHAmbiguityScheme == 3)
+
+			scenario_VH = ( (LeadCaloJet.Double("WZTagged") == 1) and SubLeadCaloJet_Htag )
+			scenario_HV = ( LeadCaloJet_Htag and (SubLeadCaloJet.Double("WZTagged") == 1) )
+			scenario    = ( (scenario_VH << 1) | scenario_HV )
+
+			# if scenario == 0: return
+
+			if scenario == 1:
+				VHAmbiguityCategory = 1
+				VCandidateJet = SubLeadCaloJet
+				HCandidateJet = LeadCaloJet
+			elif scenario == 2:
+				VHAmbiguityCategory = 1
+				VCandidateJet = LeadCaloJet
+				HCandidateJet = SubLeadCaloJet
+			elif (scenario == 3) or (scenario == 0):
+				VHAmbiguityCategory = 0
+				# based on the distance now
+				# V mass and Higgs mass number are hard-coded here
+				distance_VH = (LeadCaloJet.p.M() - 85.)**2 + (SubLeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2
+				distance_HV = (LeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2 + (SubLeadCaloJet.p.M() - 85.)**2
+
+				if distance_VH <= distance_HV:
+					if distance_VH == distance_HV:
+						print "Are you kidding me?! A tie?! I am gonna assign randomly"
+					VCandidateJet = LeadCaloJet
+					HCandidateJet = SubLeadCaloJet
+				else:
+					VCandidateJet = SubLeadCaloJet
+					HCandidateJet = LeadCaloJet
+					
+			else:
+				print "ERROR! Unexpected scenario number: ",scenario
+				sys.exit(0)
+
+		elif self._VHAmbiguityScheme in [4, 5]:
+			# Higgs tagging first
+			LeadCaloJet_Htag    = self.HiggsTagging(LeadCaloJet, Muons, self._HiggsMassCut, self._VHAmbiguityScheme == 5)
+			SubLeadCaloJet_Htag = self.HiggsTagging(SubLeadCaloJet, Muons, self._HiggsMassCut, self._VHAmbiguityScheme == 5)
+
+			# make assignment based on V-tagging and distance
+			scenario = ( ((LeadCaloJet.Double("WZTagged") == 1) << 1)  | (SubLeadCaloJet.Double("WZTagged") == 1) )
+
+			if scenario == 0:
+				print "ERROR! You are not supposed to get this scenario!"
+				sys.exit(0)
+			elif scenario == 1:
+				VHAmbiguityCategory = 1
+				VCandidateJet = SubLeadCaloJet
+				HCandidateJet = LeadCaloJet
+			elif scenario == 2:
+				VHAmbiguityCategory = 1
+				VCandidateJet = LeadCaloJet
+				HCandidateJet = SubLeadCaloJet
+			elif scenario == 3:
+				if LeadCaloJet_Htag and (not SubLeadCaloJet_Htag):
+					VHAmbiguityCategory = 1
+					VCandidateJet = SubLeadCaloJet
+					HCandidateJet = LeadCaloJet
+				elif (not LeadCaloJet) and (SubLeadCaloJet_Htag):
+					VHAmbiguityCategory = 1
+					VCandidateJet = LeadCaloJet
+					HCandidateJet = SubLeadCaloJet
+				else:
+					VHAmbiguityCategory = 0
+					distance_VH = (LeadCaloJet.p.M() - 85.)**2 + (SubLeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2
+					distance_HV = (LeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2 + (SubLeadCaloJet.p.M() - 85.)**2
+
+					if distance_VH <= distance_HV:
+						if distance_VH == distance_HV:
+							print "Are you kidding me?! A tie?! I am gonna assign randomly"
+						VCandidateJet = LeadCaloJet
+						HCandidateJet = SubLeadCaloJet
+					else:
+						VCandidateJet = SubLeadCaloJet
+						HCandidateJet = LeadCaloJet
+			else:
+				print "ERROR! Unexpected scenario number: ",scenario
+				sys.exit(0)
+		elif self._VHAmbiguityScheme == 6:
+			# just to get the muon corrected mass, if it is Higgs
+			LeadCaloJet_Htag    = self.HiggsTagging(LeadCaloJet, Muons, self._HiggsMassCut, False)
+			SubLeadCaloJet_Htag = self.HiggsTagging(SubLeadCaloJet, Muons, self._HiggsMassCut, False)
+
+			# assignment purely based on distance
+			distance_VH = (LeadCaloJet.p.M() - 85.)**2 + (SubLeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2
+			distance_HV = (LeadCaloJet.Double("MuonCorrectedMassIfHiggs") - 125.)**2 + (SubLeadCaloJet.p.M() - 85.)**2
+
+			if distance_VH <= distance_HV:
+				if distance_VH == distance_HV:
+					print "Are you kidding me?! A tie?! I am gonna assign randomly"
+				VCandidateJet = LeadCaloJet
+				HCandidateJet = SubLeadCaloJet
+			else:
+				VCandidateJet = SubLeadCaloJet
+				HCandidateJet = LeadCaloJet
+
+		else:
+			print "ERROR! Undefined ambiguity scheme:",self._VHAmbiguityScheme
+			sys.exit(0)
+
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity", _isMC)
+		self.MakeCutflowPlot(tree, "PassVHAmbiguity", _isMC)
+
+		# probability of getting correct VH assignment
+		PassCorrectVHAssignment = (HCandidateJet.Double("nHBosons") == 1) and (VCandidateJet.Double("nWBosons") + VCandidateJet.Double("nZBosons") == 1)
+
+		if PassCorrectVHAssignment:
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity__CorrectAssignment", _isMC)
+			self.MakeCutflowPlot(tree, "PassVHAmbiguity__CorrectAssignment", _isMC)
+
+		##################################################
+		# Now put in the muon-corrected 4-p for Calo-Jet #
+		##################################################
+
+		for iCaloJet, CaloJet in enumerate([HCandidateJet]):
 			sumMuonCorr = ROOT.TLorentzVector()
 
 			for TrackJet in CaloJet.ObjVec("AssocTrackJets"):
@@ -863,6 +1081,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.Set("HCandidateJetD2", HCandidateJet.Double("D2"))
 			histsvc.Set("HCandidateJetTau21", HCandidateJet.Double("Tau21"))
 			histsvc.Set("HCandidateJetTau21WTA", HCandidateJet.Double("Tau21WTA"))
+			histsvc.Set("HCandidateJetNTrack", HCandidateJet.Double("nTrack"))
 
 			histsvc.Set("VCandidateJetPt", VCandidateJet.p.Pt())
 			histsvc.Set("VCandidateJetEta", VCandidateJet.p.Eta())
@@ -871,12 +1090,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.Set("VCandidateJetD2", VCandidateJet.Double("D2"))
 			histsvc.Set("VCandidateJetTau21", VCandidateJet.Double("Tau21"))
 			histsvc.Set("VCandidateJetTau21WTA", VCandidateJet.Double("Tau21WTA"))
+			histsvc.Set("VCandidateJetNTrack", VCandidateJet.Double("nTrack"))
 
 			histsvc.Set("DiJetDeltaPhi", LeadCaloJet.p.DeltaPhi(SubLeadCaloJet.p))
 			histsvc.Set("DiJetDeltaEta", LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta())
 			histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 			histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
-
 
 		#############################
 		# Fill Track-Jet Kinematics #
@@ -974,21 +1193,54 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			HMass = HCandidateJet.p.M()
 
-			if (HMass >= 75.) and (HMass < 145.):
+			# if (HMass >= 75.) and (HMass < 145.):
+			# 	# cut-flow
+			# 	for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
+			# 	self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
+
+			# 	# histograms
+			# 	histsvc.MakeHists("GoodEvent", "_HPass%sbtagLooseMassCut"%(nPassBtag), GlobalSF)
+
+			# if (HMass >= 90.) and (HMass < 135.):
+			# 	# cut-flow
+			# 	for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
+			# 	self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
+
+			# 	# histograms
+			# 	histsvc.MakeHists("GoodEvent", "_HPass%sbtagTightMassCut"%(nPassBtag), GlobalSF)
+
+			if (HMass >= self._HiggsMassCut[0]) and (HMass < self._HiggsMassCut[1]):
+				# 
+				# b-tagging only
+				#
+
 				# cut-flow
-				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
-				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
+				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
+				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
+
+				# check probability of correct assignment
+				if PassCorrectVHAssignment:
+					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
+					self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
 
 				# histograms
-				histsvc.MakeHists("GoodEvent", "_HPass%sbtagLooseMassCut"%(nPassBtag), GlobalSF)
+				histsvc.MakeHists("GoodEvent", "_HPass%sbtagHiggsMassCut"%(nPassBtag), GlobalSF)
 
-			if (HMass >= 90.) and (HMass < 135.):
+				#
+				# plus VHambiguity category now
+				#
+
 				# cut-flow
-				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
-				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
+				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+
+				# check probability of correct assignment
+				if PassCorrectVHAssignment:
+					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+					self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
 
 				# histograms
-				histsvc.MakeHists("GoodEvent", "_HPass%sbtagTightMassCut"%(nPassBtag), GlobalSF)
+				histsvc.MakeHists("GoodEvent", "_HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), GlobalSF)
 
 
 		####################
@@ -1022,6 +1274,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 					# Event Level #
 					ntuplesvc_tinytree.SetEventValue("nPassBtag", nPassBtag)
+					ntuplesvc_tinytree.SetEventValue("VHAmbiguityCategory", VHAmbiguityCategory)
 
 					if _isMC:
 						ntuplesvc_tinytree.SetEventValue("ChannelNumber", tree.mcChannelNumber)
@@ -1040,6 +1293,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetD2", histsvc.Get("HCandidateJetD2"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetTau21", histsvc.Get("HCandidateJetTau21"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetTau21WTA", histsvc.Get("HCandidateJetTau21WTA"))
+					ntuplesvc_tinytree.SetEventValue("HCandidateJetNTrack", histsvc.Get("HCandidateJetNTrack"))
 
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetPt", histsvc.Get("VCandidateJetPt"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetEta", histsvc.Get("VCandidateJetEta"))
@@ -1048,6 +1302,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetD2", histsvc.Get("VCandidateJetD2"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetTau21", histsvc.Get("VCandidateJetTau21"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetTau21WTA", histsvc.Get("VCandidateJetTau21WTA"))
+					ntuplesvc_tinytree.SetEventValue("VCandidateJetNTrack", histsvc.Get("VCandidateJetNTrack"))
 
 					ntuplesvc_tinytree.SetEventValue("dRjj_HCandidateJet", histsvc.Get("dRjj_HCandidateJet", -100, True))
 					ntuplesvc_tinytree.SetEventValue("dRjj_VCandidateJet", histsvc.Get("dRjj_VCandidateJet", -100, True))
@@ -1061,6 +1316,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_HCandidateJet_Eta", histsvc.Get("SubLeadTrackJet_HCandidateJet_Eta", -100, True))
 					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_VCandidateJet_Eta", histsvc.Get("LeadTrackJet_VCandidateJet_Eta", -100, True))
 					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_VCandidateJet_Eta", histsvc.Get("SubLeadTrackJet_VCandidateJet_Eta", -100, True))
+
+					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_HCandidateJet_MV2c20", histsvc.Get("LeadTrackJet_HCandidateJet_MV2c20", -100, True))
+					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_HCandidateJet_MV2c20", histsvc.Get("SubLeadTrackJet_HCandidateJet_MV2c20", -100, True))
+					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_VCandidateJet_MV2c20", histsvc.Get("LeadTrackJet_VCandidateJet_MV2c20", -100, True))
+					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_VCandidateJet_MV2c20", histsvc.Get("SubLeadTrackJet_VCandidateJet_MV2c20", -100, True))
 
 					# Obj Level # (SF info)
 					ntuplesvc_tinytree.SetObjValue("SFList", SFList)
@@ -1242,6 +1502,37 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetPtResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
 					if MatchedTruthJet.E() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
 					if MatchedTruthJet.M() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+
+	# emulate the Higgs tagging
+	# Make sure one has already done the muon association to track-jets from calo-jet
+	# also make sure you do not apply any change on CaloJet here! (i.e. only accessing information, not writing in any information)
+	def HiggsTagging(self, CaloJet, Muons, MassWindow, doBtag):
+		# at least 1-btags
+		PassBtag = True
+		if doBtag:
+			BtaggedTrackJets = [ TrackJet for TrackJet in CaloJet.ObjVec("AssocTrackJets") if TrackJet.Double("MV2c20") > self._MV2c20CutDict[self._TrackJetWP] ]
+			nbtag = len(BtaggedTrackJets)
+			PassBtag = (PassBtag and (nbtag >= 1)) 
+
+		# muon corrected 4-momentum 
+		sumMuonCorr = ROOT.TLorentzVector()
+		for TrackJet in CaloJet.ObjVec("AssocTrackJets"):
+			if TrackJet.Exists("MuonAssocIndex"):
+				sumMuonCorr += (Muons[TrackJet.Int("MuonAssocIndex")].p)
+		MuonCorrected4p = CaloJet.p + sumMuonCorr
+
+		# mass cut
+		CorrectedMass = MuonCorrected4p.M()
+		PassMassWindow = ( (CorrectedMass >= MassWindow[0]) and (CorrectedMass < MassWindow[1]) )
+
+		# store it
+		CaloJet.Set("MuonCorrectedMassIfHiggs", CorrectedMass)
+
+		return (PassBtag and PassMassWindow)
+
+
+
+
 
 
 

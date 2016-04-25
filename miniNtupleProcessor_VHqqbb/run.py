@@ -16,18 +16,14 @@ treename = "XhhMiniNtuple"
 # Nominal Samples #
 ###################
 
-########################
-# Inclusive ttbar only #
-########################
-
-########
-# test #
-########
-
+filename = ""
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_WH.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_ZH.txt"
-filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_JZXW.txt"
+
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_JZXW.txt"
 # filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_ttbar.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_Wjets.txt"
+# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_Zjets.txt"
 
 
 ########################
@@ -89,6 +85,7 @@ def runProof(address, nworkers=0):
 
 # kernel python running function
 def runSys(sysName, doLite=False, nworkers=0):
+	print "Runing over sample:",filename
 	print "Running over systematic \'%s\'" % (sysName)
 
 	# whether this is a b-tagging systematics
@@ -135,7 +132,8 @@ def runSys(sysName, doLite=False, nworkers=0):
 	######################################################################
 	dictOptions = {
 	                "OutputDir"   : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor_VHqqbb/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
-	                # "ChannelCut": 301495.,
+	                # "ChannelCut"  : 302331.,   # touch
+	                "ChannelCut"  : 302340.,     # touch, WH-5TeV
 	                "BtagSys"     : (sysName if isBtagSys else ""),
 	                "IsBtagSys"   : isBtagSys,
 	                "TinyTree"    : True,
@@ -164,15 +162,40 @@ def runSys(sysName, doLite=False, nworkers=0):
 	# also remember to remove option files afterward
 	os.remove("options.json")
 
+	# check if all outputs are successful
+	dirCheckList = []
+	if isBtagSys:
+		folderlist = subprocess.check_output("ls "+dictOptions['OutputDir'], shell=True).split("\n")[:-1]
+		dirCheckList += [dictOptions['OutputDir']+"/"+folder+"/" for folder in folderlist ]
+	else:
+		dirCheckList += [dictOptions['OutputDir']]
+
+	time.sleep(5)
+
+	print "===================================================================================================="
+	print "Summary of running over:",filename
+	for dirToCheck in dirCheckList:
+		print "==> Checking dir:",dirToCheck,"..."
+		nCPUReceived = int(subprocess.check_output("ls %s | wc -l" % (dirToCheck), shell=True).split("\n")[0])
+		if nCPUReceived != nworkers:
+			print "*** ERROR ***! Number of workers expected is %s but only find %s. Please rerun this job!" % (nworkers, nCPUReceived)
+		else:
+			print "Looks OK!"
+	print "===================================================================================================="
+
 # to be called from shell
 def runShell():
 	parser = OptionParser()
+	parser.add_option("-f", "--sampleName", dest="sampleName", help="sample name to be processed", default="")
 	parser.add_option("-a", "--allSys", action="store_true", dest="allSys", help="Whether do all systematics", default=False)
 	parser.add_option("-s", "--sysName", dest="sysName", help="Systematics name to be considered", type="string", default="Nominal")
 	parser.add_option("-l", "--doLite", action="store_true", dest="doLite", help="Whether use lite proof", default=False)
 	parser.add_option("-n", "--nworkers", dest="nworkers", help="Number of workers to be used", type="int", default=0)
 	parser.add_option("-m", "--nworkers_nonbtag", dest="nworkers_nonbtag", help="Number of workers to be used, when processing non-btag systematics", type="int", default=0)
 	(options, args) = parser.parse_args()
+
+	global filename
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."
@@ -210,7 +233,7 @@ def runShell():
 			else:
 				nActualWorkers = options.nworkers
 
-			cmd = "python run.py -s %s -n %s" % (sysName, nActualWorkers)
+			cmd = "python run.py -f %s -s %s -n %s" % (options.sampleName, sysName, nActualWorkers)
 			if options.doLite:
 				cmd += " -l"
 			print "------> ",cmd
