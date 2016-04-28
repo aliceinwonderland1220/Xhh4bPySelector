@@ -139,7 +139,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = True                       # whether we blind the data
 		self._doJERStudy  = False                      # turn on JERStudy --- basically the truth response stuffs
-		self._VHAmbiguityScheme = 1 # touch            # How to solve V/H ambiguity:
+		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
 		                                               # 3: same as 2, but requires at least 1 b-tag in Higgs-tagging definition
@@ -177,8 +177,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._JetMassCut   = 50.                     # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 		self._JetPtUpBound = 1e9 #1500.              # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
-		self._doDETACut    = False                   # whether we apply delta eta cut
-		self._HiggsMassCut = (75, 145) #touch        # Standard Loose: 75~145, ~90%
+		self._doDETACut    = False # touch                  # whether we apply delta eta cut
+		self._doPtAsymmCut = False # touch                  # whether we apply pt asymmetry cut
+		self._HiggsMassCut = (90, 135) #touch        # Standard Loose: 75~145, ~90%
 		                                             # Standard Tight: 90~135, ~68%
 		self._WZWP = "Medium"      # touch           # working point for W/Z tagging
 
@@ -186,7 +187,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
-		self._TrackJetWP = "70" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
+		self._TrackJetWP = "77" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
 		self._ResetSF = True                           # if True, then SF all reset to 1.
 
 		# muon correction
@@ -258,6 +259,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "DiJetDeltaR",
 		                       "DiJetDeltaPhi",
 		                       "DiJetDeltaEta",
+		                       "DiJetPtAsymm",
 
 		                       "HCandidateJetPt",
 		                       "HCandidateJetEta",
@@ -388,6 +390,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		histsvc.Book("DiJetDeltaEta", "DiJetDeltaEta", self._EvtWeight, 80, -4, 4)
 		histsvc.Book("DiJetDeltaR", "DiJetDeltaR", self._EvtWeight, 100, 0, 5)
 		histsvc.Book("DiJetMass", "DiJetMass", self._EvtWeight, 160, 0, 8000)
+		histsvc.Book("DiJetPtAsymm", "DiJetPtAsymm", self._EvtWeight, 20, 0, 1)
 
 		histsvc.Book("dRjj_HCandidateJet", "dRjj_HCandidateJet", self._EvtWeight, 75, 0, 1.5)
 		histsvc.Book("dRjj_VCandidateJet", "dRjj_VCandidateJet", self._EvtWeight, 75, 0, 1.5)
@@ -703,6 +706,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#
 
 		if LeadCaloJet.p.Pt() < 350.:      return
+		# if LeadCaloJet.p.Pt() < 450.:      return       # touch
 		if abs(LeadCaloJet.p.Eta()) > 2.0: return
 
 		if SubLeadCaloJet.p.Pt() < 250.:      return
@@ -754,12 +758,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# calo-jet dEta cuts
 		# 
 
-		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.3)
+		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.2)   # value from VVJJ analysis
 
 		if (self._doDETACut and (not PassdEtaCut)): return
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
 		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
+
+		#
+		# Pt asymmetry cut
+		#
+
+		PassPtAsymmCut = ( (LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt())/(LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt()) < 0.15 )
+
+		if (self._doPtAsymmCut and (not PassPtAsymmCut)): return 
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassPtAsymmCut", _isMC)
+		self.MakeCutflowPlot(tree, "PassPtAsymmCut", _isMC)
 
 		#
 		# some quick calo-jet kineamtics distribution BEFORE V-tagging
@@ -1030,6 +1045,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			else:
 				VCandidateJet = SubLeadCaloJet
 				HCandidateJet = LeadCaloJet
+		elif self._VHAmbiguityScheme == 7:
+			# just see who is heavier
+			if LeadCaloJet.p.M() > SubLeadCaloJet.p.M():
+				HCandidateJet = LeadCaloJet
+				VCandidateJet = SubLeadCaloJet
+			else:
+				HCandidateJet = SubLeadCaloJet
+				VCandidateJet = LeadCaloJet
 
 		else:
 			print "ERROR! Undefined ambiguity scheme:",self._VHAmbiguityScheme
@@ -1039,9 +1062,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity", _isMC)
 		self.MakeCutflowPlot(tree, "PassVHAmbiguity", _isMC)
 
+		# the V-candidate must pass V-tagging
+		if VCandidateJet.Double("WZTagged") != 1: return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVCandidateVtagged", _isMC)
+		self.MakeCutflowPlot(tree, "PassVCandidateVtagged", _isMC)
+
 		# probability of getting correct VH assignment
 		PassCorrectVHAssignment = (HCandidateJet.Double("nHBosons") == 1) and (VCandidateJet.Double("nWBosons") + VCandidateJet.Double("nZBosons") == 1)
-
 		if PassCorrectVHAssignment:
 			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity__CorrectAssignment", _isMC)
 			self.MakeCutflowPlot(tree, "PassVHAmbiguity__CorrectAssignment", _isMC)
@@ -1096,6 +1124,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.Set("DiJetDeltaEta", LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta())
 			histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 			histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
+			histsvc.Set("DiJetPtAsymm", 1.0*(LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt())/(LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt()))
 
 		#############################
 		# Fill Track-Jet Kinematics #
@@ -1285,6 +1314,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("DiJetDeltaR", histsvc.Get("DiJetDeltaR"))
 					ntuplesvc_tinytree.SetEventValue("DiJetDeltaPhi", histsvc.Get("DiJetDeltaPhi"))
 					ntuplesvc_tinytree.SetEventValue("DiJetDeltaEta", histsvc.Get("DiJetDeltaEta"))
+					ntuplesvc_tinytree.SetEventValue("DiJetPtAsymm", histsvc.Get("DiJetPtAsymm"))
 
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetPt", histsvc.Get("HCandidateJetPt"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetEta", histsvc.Get("HCandidateJetEta"))

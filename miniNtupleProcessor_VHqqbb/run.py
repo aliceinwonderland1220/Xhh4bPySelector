@@ -132,8 +132,8 @@ def runSys(sysName, doLite=False, nworkers=0):
 	######################################################################
 	dictOptions = {
 	                "OutputDir"   : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor_VHqqbb/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
-	                # "ChannelCut"  : 302331.,   # touch
-	                "ChannelCut"  : 302340.,     # touch, WH-5TeV
+	                # "ChannelCut"  : 302331.,   # touch, WH-2TeV
+	                # "ChannelCut"  : 302340.,     # touch, WH-5TeV
 	                "BtagSys"     : (sysName if isBtagSys else ""),
 	                "IsBtagSys"   : isBtagSys,
 	                "TinyTree"    : True,
@@ -155,8 +155,8 @@ def runSys(sysName, doLite=False, nworkers=0):
 	if doLite:
 		address = "lite://"
 	else:
-		address = "zengq@atlint04.slac.stanford.edu:21001"
-		# address = "zengq@atlint03.slac.stanford.edu:21001"
+		# address = "zengq@atlint04.slac.stanford.edu:21001"
+		address = "zengq@atlint03.slac.stanford.edu:21001"
 	runProof(address, nworkers)
 
 	# also remember to remove option files afterward

@@ -4,9 +4,9 @@ import time
 sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
 for sampleName in sampleList:
 	if sampleName == "JZXW":
-		nworkers = 100
+		nworkers = 150
 	else:
-		nworkers = 50
+		nworkers = 70
 
 	cmd = "python run.py -f %s -n %s" % (sampleName, nworkers)
 	print cmd
