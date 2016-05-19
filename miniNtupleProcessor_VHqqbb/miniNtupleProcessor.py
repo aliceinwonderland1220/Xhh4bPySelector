@@ -159,7 +159,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/filelist_Xsection.config"
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v1/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 
@@ -177,9 +177,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._JetMassCut   = 50.                     # mass cut on calo-jet, BEFORE muon correction (because jet with mass < 50 GeV is not calibrated at all)
 		self._JetPtUpBound = 1e9 #1500.              # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
-		self._doDETACut    = False # touch                  # whether we apply delta eta cut
-		self._doPtAsymmCut = False # touch                  # whether we apply pt asymmetry cut
-		self._HiggsMassCut = (90, 135) #touch        # Standard Loose: 75~145, ~90%
+		self._HiggsMassCut = (75, 145) #touch        # Standard Loose: 75~145, ~90%
 		                                             # Standard Tight: 90~135, ~68%
 		self._WZWP = "Medium"      # touch           # working point for W/Z tagging
 
@@ -252,6 +250,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "ChannelNumber",
 		                       "nPassBtag",
 		                       "VHAmbiguityCategory",
+		                       "PassVtagging",
+		                       "AntiVtaggingCR",
 		                       ]
 
 		self.EventVarListPython__kinematic = [
@@ -269,6 +269,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "HCandidateJetTau21",
 		                       "HCandidateJetTau21WTA",
 		                       "HCandidateJetNTrack",
+		                       "HCandidateJetIsVtagged",
 
 		                       "VCandidateJetPt",
 		                       "VCandidateJetEta",
@@ -278,6 +279,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "VCandidateJetTau21",
 		                       "VCandidateJetTau21WTA",
 		                       "VCandidateJetNTrack",
+		                       "VCandidateJetIsVtagged",
+		                       "VCandidateJetWtagCode",
+		                       "VCandidateJetZtagCode",
 
 		                       "dRjj_HCandidateJet",
 		                       "dRjj_VCandidateJet",
@@ -638,8 +642,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
 		LeadCaloJet = ROOT.Particle(LeadCaloJet)
 		if self._WZWP == "Medium":
+			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[0])
+			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_medium[0])
 			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[0] == 3) or (tree.hcand_boosted_Ztag_medium[0] == 3))   # W/Z, mass+D2 cut, medium
 		elif self._WZWP == "Tight":
+			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_tight[0])
+			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_tight[0])
 			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[0] == 3) or (tree.hcand_boosted_Ztag_tight[0] == 3))   # W/Z, mass+D2 cut, tight
 		else:
 			print "ERROR! Unrecognized WZ Workign point:",self._WZWP
@@ -656,8 +664,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
 		if self._WZWP == "Medium":
+			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[1])
+			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_medium[1])
 			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_medium[1] == 3) or (tree.hcand_boosted_Ztag_medium[1] == 3))  # W/Z, mass+D2 cut, medium
 		elif self._WZWP == "Tight":
+			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_tight[1])
+			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_tight[1])
 			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[1] == 3) or (tree.hcand_boosted_Ztag_tight[1] == 3))  # W/Z, mass+D2 cut, tight
 		else:
 			print "ERROR! Unrecognized WZ Working point:",self._WZWP
@@ -754,60 +766,70 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "CosTheta_Lead", LeadCaloJetp4_COM.Vect().CosTheta(), self._EvtWeight[0], 60, -1, 2)
 			self.FillOneVarForAllSignal(tree, _isMC, "BeforedEtaCut", "CosTheta_SubLead", SubLeadCaloJetp4_COM.Vect().CosTheta(), self._EvtWeight[0], 60, -1, 2)
 
-		#
-		# calo-jet dEta cuts
+		# 
+		# Event Topology Cut
 		# 
 
-		PassdEtaCut = (abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta()) < 1.2)   # value from VVJJ analysis
+		dEta_beforeMuonCorr = abs(LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta())
+		DiJetPtAsymm_beforeMuonCorr = abs(LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt()) / (LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt())
+		DiJetMass_beforeMuonCorr = (LeadCaloJet.p + SubLeadCaloJet.p).M()
 
-		if (self._doDETACut and (not PassdEtaCut)): return
+		PassdEtaCut = ( dEta_beforeMuonCorr < (2e-4 * DiJetMass_beforeMuonCorr + 1.) )
+		# PassdEtaCut = (dEta_beforeMuonCorr < 1.6)                                    # touch
+		
+		# PassPtAsymmCut = (DiJetPtAsymm_beforeMuonCorr < 0.25)
+		PassPtAsymmCut = True                             # don't cut on this anymore
+
+		if not PassdEtaCut: return 
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassdEtaCut", _isMC)
 		self.MakeCutflowPlot(tree, "PassdEtaCut", _isMC)
 
-		#
-		# Pt asymmetry cut
-		#
-
-		PassPtAsymmCut = ( (LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt())/(LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt()) < 0.15 )
-
-		if (self._doPtAsymmCut and (not PassPtAsymmCut)): return 
+		if not PassPtAsymmCut: return
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassPtAsymmCut", _isMC)
 		self.MakeCutflowPlot(tree, "PassPtAsymmCut", _isMC)
 
-		#
-		# some quick calo-jet kineamtics distribution BEFORE V-tagging
-		#
-
-		for btagSysName in self._btagSysList:
-			histsvc = self.histsvc[btagSysName]['histsvc']
-
-			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
-			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
-			histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
+		# ***************************************************************************************************************************************
 
 		#
-		# At least one calo-jet should be V-tagged
-		#
+		# At least one V-tagged cut not applied, in order to leave room for anti-V-tagging CR
+		# 
 
-		PassAtLeastOneVtag = (LeadCaloJet.Double("WZTagged") == 1) or (SubLeadCaloJet.Double("WZTagged") == 1)
+		# #
+		# # some quick calo-jet kineamtics distribution BEFORE V-tagging
+		# #
 
-		if not PassAtLeastOneVtag: return
+		# for btagSysName in self._btagSysList:
+		# 	histsvc = self.histsvc[btagSysName]['histsvc']
 
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassAtLeastOneVtag", _isMC)
-		self.MakeCutflowPlot(tree, "PassAtLeastOneVtag", _isMC)
+		# 	histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+		# 	histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+		# 	histsvc.AutoFill("GoodEvent", "_BeforeAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
 
-		#
-		# some quick calo-jet kineamtics distribution AFTER V-tagging
-		#
+		# #
+		# # At least one calo-jet should be V-tagged
+		# #
 
-		for btagSysName in self._btagSysList:
-			histsvc = self.histsvc[btagSysName]['histsvc']
+		# PassAtLeastOneVtag = (LeadCaloJet.Double("WZTagged") == 1) or (SubLeadCaloJet.Double("WZTagged") == 1)
 
-			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
-			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
-			histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
+		# if not PassAtLeastOneVtag: return
+
+		# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassAtLeastOneVtag", _isMC)
+		# self.MakeCutflowPlot(tree, "PassAtLeastOneVtag", _isMC)
+
+		# #
+		# # some quick calo-jet kineamtics distribution AFTER V-tagging
+		# #
+
+		# for btagSysName in self._btagSysList:
+		# 	histsvc = self.histsvc[btagSysName]['histsvc']
+
+		# 	histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+		# 	histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
+		# 	histsvc.AutoFill("GoodEvent", "_AfterAtLeastOneVtag", "MJJ", (LeadCaloJet.p + SubLeadCaloJet.p).M(), self._EvtWeight[0], 160, 0, 8000)
+
+		# ***************************************************************************************************************************************
 
 
 		############################
@@ -1047,6 +1069,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				HCandidateJet = LeadCaloJet
 		elif self._VHAmbiguityScheme == 7:
 			# just see who is heavier
+			VHAmbiguityCategory = 1
+
 			if LeadCaloJet.p.M() > SubLeadCaloJet.p.M():
 				HCandidateJet = LeadCaloJet
 				VCandidateJet = SubLeadCaloJet
@@ -1062,17 +1086,38 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity", _isMC)
 		self.MakeCutflowPlot(tree, "PassVHAmbiguity", _isMC)
 
-		# the V-candidate must pass V-tagging
-		if VCandidateJet.Double("WZTagged") != 1: return
+		# probability of getting correct VH assignment #
 
-		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVCandidateVtagged", _isMC)
-		self.MakeCutflowPlot(tree, "PassVCandidateVtagged", _isMC)
-
-		# probability of getting correct VH assignment
 		PassCorrectVHAssignment = (HCandidateJet.Double("nHBosons") == 1) and (VCandidateJet.Double("nWBosons") + VCandidateJet.Double("nZBosons") == 1)
 		if PassCorrectVHAssignment:
 			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity__CorrectAssignment", _isMC)
 			self.MakeCutflowPlot(tree, "PassVHAmbiguity__CorrectAssignment", _isMC)
+
+		#########################################################################################
+		# Categorize event based on V-tagging (a subset of anti-V-tagging might be used for CR) #
+		#########################################################################################
+
+		PassVtagging = (VCandidateJet.Double("WZTagged") == 1)
+		AntiVtaggingCR = (VCandidateJet.Double("WtagCode") <= 1) and (VCandidateJet.Double("ZtagCode") <= 1)     # fail both W and Z mass window cut, making sure it fails the V-tagging. However, the "actual" anti-V-tagging CR might still be a subset of this
+
+		# in case buggy things happen ...
+		if PassVtagging and AntiVtaggingCR:
+			print "ERROR! PassVtagging and AntiVtaggingCR are supposed to be orthogonal to each other!"
+			sys.exit(0)
+
+		if (not PassVtagging) and (not AntiVtaggingCR): return
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVtaggingORAntiVtaggingCR", _isMC)
+		self.MakeCutflowPlot(tree, "PassVtaggingORAntiVtaggingCR", _isMC)
+
+		VtagString = "None"
+		if PassVtagging:
+			VtagString = "PassVtagging"
+		if AntiVtaggingCR:
+			VtagString = "AntiVtaggingCR"
+
+		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, VtagString, _isMC)
+		self.MakeCutflowPlot(tree, VtagString, _isMC)
 
 		##################################################
 		# Now put in the muon-corrected 4-p for Calo-Jet #
@@ -1124,7 +1169,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.Set("DiJetDeltaEta", LeadCaloJet.p.Eta() - SubLeadCaloJet.p.Eta())
 			histsvc.Set("DiJetDeltaR", LeadCaloJet.p.DeltaR(SubLeadCaloJet.p))
 			histsvc.Set("DiJetMass", (LeadCaloJet.p + SubLeadCaloJet.p).M())
-			histsvc.Set("DiJetPtAsymm", 1.0*(LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt())/(LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt()))
+			histsvc.Set("DiJetPtAsymm", 1.0*abs(LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt())/(LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt()))
 
 		#############################
 		# Fill Track-Jet Kinematics #
@@ -1163,15 +1208,6 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		####################################################################################################################
 
-
-		##############################################
-		# Histograms before b-tagging categorization #
-		##############################################
-
-		for btagSysName in self._btagSysList:
-			histsvc = self.histsvc[btagSysName]['histsvc']
-			histsvc.MakeHists("GoodEvent", "_BeforeBTagging")
-
 		##########################################
 		# Categorize based on H-candidate b-tags #
 		##########################################
@@ -1188,18 +1224,36 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			for btagSysName in self._btagSysList:
 				_EventBtagSF[btagSysName] = _EventBtagSF[btagSysName] * TrackJet.Double("SF"+btagSysName)
 
-		#
-		# Blind the Data
-		#
+		##################
+		# Blind the Data #
+		##################
 
 		if (not _isMC) and self._doBlindData:
 			HMass = HCandidateJet.p.M()
 
-			# At this moment, we don't know if we want to include 0-btag as SR
-			# Also, we dont' know which mass window to use
-			# So we use the most conservative cut to blind data
-			if (HMass >= 75) and (HMass < 145.):
-				return
+			# define Blinding Region
+			BlindRegion = False
+			if PassVtagging and (HMass >= self._HiggsMassCut[0]) and (HMass < self._HiggsMassCut[1]):
+				if nPassBtag >= 1: 
+					BlindRegion = True
+				elif (HCandidateJet.p + VCandidateJet.p).M() > 3000:
+					BlindRegion = True
+
+			if BlindRegion: return
+
+		##############################################
+		# Histograms before b-tagging categorization #
+		##############################################
+
+		for btagSysName in self._btagSysList:
+			histsvc = self.histsvc[btagSysName]['histsvc']
+			histsvc.MakeHists("GoodEvent", "_"+VtagString+"_BeforeBTagging")
+
+		###########################
+		# Making plots in SR / CR #
+		###########################
+
+		# plots here are always categorized in nbtag and VtagString
 
 		for btagSysName in self._btagSysList:
 			GlobalSF = _EventBtagSF[btagSysName]
@@ -1210,11 +1264,11 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			#
 
 			# cut-flow
-			for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtag"%(nPassBtag), _isMC, GlobalSF)
-			self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtag"%(nPassBtag), _isMC, GlobalSF)
+			for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, VtagString+"_HPass%sbtag"%(nPassBtag), _isMC, GlobalSF)
+			self.MakeCutflowPlotOneSys(tree, btagSysName, VtagString+"_HPass%sbtag"%(nPassBtag), _isMC, GlobalSF)
 
 			# histograms
-			histsvc.MakeHists("GoodEvent", "_HPass%sbtag"%(nPassBtag), GlobalSF)
+			histsvc.MakeHists("GoodEvent", "_"+VtagString+"_HPass%sbtag"%(nPassBtag), GlobalSF)
 
 			#
 			# Now Higgs Mass Cut
@@ -1222,54 +1276,38 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 			HMass = HCandidateJet.p.M()
 
-			# if (HMass >= 75.) and (HMass < 145.):
-			# 	# cut-flow
-			# 	for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
-			# 	self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagLooseMassCut"%(nPassBtag), _isMC, GlobalSF)
-
-			# 	# histograms
-			# 	histsvc.MakeHists("GoodEvent", "_HPass%sbtagLooseMassCut"%(nPassBtag), GlobalSF)
-
-			# if (HMass >= 90.) and (HMass < 135.):
-			# 	# cut-flow
-			# 	for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
-			# 	self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagTightMassCut"%(nPassBtag), _isMC, GlobalSF)
-
-			# 	# histograms
-			# 	histsvc.MakeHists("GoodEvent", "_HPass%sbtagTightMassCut"%(nPassBtag), GlobalSF)
-
 			if (HMass >= self._HiggsMassCut[0]) and (HMass < self._HiggsMassCut[1]):
 				# 
 				# b-tagging only
 				#
 
 				# cut-flow
-				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
-				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
+				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, VtagString+"_HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
+				self.MakeCutflowPlotOneSys(tree, btagSysName, VtagString+"_HPass%sbtagHiggsMassCut"%(nPassBtag), _isMC, GlobalSF)
 
 				# check probability of correct assignment
 				if PassCorrectVHAssignment:
-					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
-					self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
+					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, VtagString+"_HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
+					self.MakeCutflowPlotOneSys(tree, btagSysName, VtagString+"_HPass%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag), _isMC, GlobalSF)
 
 				# histograms
-				histsvc.MakeHists("GoodEvent", "_HPass%sbtagHiggsMassCut"%(nPassBtag), GlobalSF)
+				histsvc.MakeHists("GoodEvent", "_"+VtagString+"_HPass%sbtagHiggsMassCut"%(nPassBtag), GlobalSF)
 
 				#
 				# plus VHambiguity category now
 				#
 
 				# cut-flow
-				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
-				self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+				for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, VtagString+"_HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+				self.MakeCutflowPlotOneSys(tree, btagSysName, VtagString+"_HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
 
 				# check probability of correct assignment
 				if PassCorrectVHAssignment:
-					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, "HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
-					self.MakeCutflowPlotOneSys(tree, btagSysName, "HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+					for triggerName in PassedTriggerList: self.MakeTriggerPlotOneSys(tree, btagSysName, triggerName, VtagString+"_HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
+					self.MakeCutflowPlotOneSys(tree, btagSysName, VtagString+"_HPass%s%sbtagHiggsMassCut__CorrectAssignment"%(nPassBtag, VHAmbiguityCategory), _isMC, GlobalSF)
 
 				# histograms
-				histsvc.MakeHists("GoodEvent", "_HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), GlobalSF)
+				histsvc.MakeHists("GoodEvent", "_"+VtagString+"_HPass%s%sbtagHiggsMassCut"%(nPassBtag, VHAmbiguityCategory), GlobalSF)
 
 
 		####################
@@ -1304,6 +1342,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					# Event Level #
 					ntuplesvc_tinytree.SetEventValue("nPassBtag", nPassBtag)
 					ntuplesvc_tinytree.SetEventValue("VHAmbiguityCategory", VHAmbiguityCategory)
+					ntuplesvc_tinytree.SetEventValue("PassVtagging", PassVtagging)
+					ntuplesvc_tinytree.SetEventValue("AntiVtaggingCR", AntiVtaggingCR)
 
 					if _isMC:
 						ntuplesvc_tinytree.SetEventValue("ChannelNumber", tree.mcChannelNumber)
@@ -1324,6 +1364,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetTau21", histsvc.Get("HCandidateJetTau21"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetTau21WTA", histsvc.Get("HCandidateJetTau21WTA"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetNTrack", histsvc.Get("HCandidateJetNTrack"))
+					ntuplesvc_tinytree.SetEventValue("HCandidateJetIsVtagged", HCandidateJet.Double("WZTagged"))
 
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetPt", histsvc.Get("VCandidateJetPt"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetEta", histsvc.Get("VCandidateJetEta"))
@@ -1333,6 +1374,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetTau21", histsvc.Get("VCandidateJetTau21"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetTau21WTA", histsvc.Get("VCandidateJetTau21WTA"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetNTrack", histsvc.Get("VCandidateJetNTrack"))
+					ntuplesvc_tinytree.SetEventValue("VCandidateJetIsVtagged", VCandidateJet.Double("WZTagged"))
+					ntuplesvc_tinytree.SetEventValue("VCandidateJetWtagCode", VCandidateJet.Double("WtagCode"))
+					ntuplesvc_tinytree.SetEventValue("VCandidateJetZtagCode", VCandidateJet.Double("ZtagCode"))
 
 					ntuplesvc_tinytree.SetEventValue("dRjj_HCandidateJet", histsvc.Get("dRjj_HCandidateJet", -100, True))
 					ntuplesvc_tinytree.SetEventValue("dRjj_VCandidateJet", histsvc.Get("dRjj_VCandidateJet", -100, True))
@@ -1366,10 +1410,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 	def GetXsecWeight(self, tree):
 		if self._ApplyXsecWeight:
 			# first-time loading
-			if self._XsecConfigObj is None:
+			if self._XsecConfigObj == None:
 				self._XsecConfigObj = ROOT.TEnv(self._XsectionConfig)
 
-				if self._XsecConfigObj is None:
+				if self._XsecConfigObj == None:
 					print ': ERROR! Cannot open Xsec configuration file',self._XsectionConfig
 					sys.exit(0)
 			
