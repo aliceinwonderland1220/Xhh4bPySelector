@@ -774,8 +774,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		DiJetPtAsymm_beforeMuonCorr = abs(LeadCaloJet.p.Pt() - SubLeadCaloJet.p.Pt()) / (LeadCaloJet.p.Pt() + SubLeadCaloJet.p.Pt())
 		DiJetMass_beforeMuonCorr = (LeadCaloJet.p + SubLeadCaloJet.p).M()
 
-		PassdEtaCut = ( dEta_beforeMuonCorr < (2e-4 * DiJetMass_beforeMuonCorr + 1.) )
-		# PassdEtaCut = (dEta_beforeMuonCorr < 1.6)                                    # touch
+		# PassdEtaCut = ( dEta_beforeMuonCorr < (2e-4 * DiJetMass_beforeMuonCorr + 1.) )
+		PassdEtaCut = (dEta_beforeMuonCorr < 1.6)                                    # touch
 		
 		# PassPtAsymmCut = (DiJetPtAsymm_beforeMuonCorr < 0.25)
 		PassPtAsymmCut = True                             # don't cut on this anymore
