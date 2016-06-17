@@ -159,7 +159,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v1/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v2/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 
@@ -172,6 +172,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._TriggerList = ["HLT_j360_a10r_L1J100"]   # only fat-jet trigger since v00-05-00 !
 		self._doTriggerCut = True                      # When one wants to do the trigger study, make sure this option is turned OFF !
+
+		# lepton veto
+
+		self._doLeptonVeto = True   # touch                  # no "loose" lepton in the event
 
 		# calo-jet
 
@@ -617,6 +621,25 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassJetCleaning", _isMC)
 		self.MakeCutflowPlot(tree, "PassJetCleaning", _isMC)
+
+		###############
+		# Lepton Veto #
+		###############
+
+		if self._doLeptonVeto:
+
+			if tree.n_muons_veto > 0: return
+
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassMuonVetoCut", _isMC)
+			self.MakeCutflowPlot(tree, "PassMuonVetoCut", _isMC)
+
+			if tree.n_electrons_veto > 0: return
+
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassElectronVetoCut", _isMC)
+			self.MakeCutflowPlot(tree, "PassElectronVetoCut", _isMC)
+
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassLeptonVetoCut", _isMC)
+			self.MakeCutflowPlot(tree, "PassLeptonVetoCut", _isMC)
 
 		#####################
 		# Calo-jet Business #

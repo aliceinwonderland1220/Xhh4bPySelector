@@ -111,7 +111,8 @@ def GetGridFileList(datasetname):
 	outputList = []
 	rawRucioOutput = subprocess.check_output(["rucio", "list-files", datasetname]).split("\n")
 	for line in rawRucioOutput:
-		if "pool.root" not in line: continue
+		# if "pool.root" not in line: continue
+		if ".root" not in line: continue
 		GridFileName = line.split("|")[1].replace(" ","")
 		outputList.append(GridFileName)
 
@@ -125,7 +126,8 @@ def GenerateFileListR2D2(datasetname, RSE, outputFileName):
 	for GridFileName in GridFileList:
 		rawRucio = subprocess.check_output(["rucio", "list-file-replicas", GridFileName]).split("\n")
 		for line in rawRucio:
-			if "pool.root" not in line: continue
+			# if "pool.root" not in line: continue
+			if ".root" not in line: continue
 			if RSE not in line: continue
 
 			FilePathAndName = line.split("|")[5].split(":")[-1]
@@ -141,15 +143,17 @@ def GenerateFileListR2D2(datasetname, RSE, outputFileName):
 	f.close()
 
 def runGenerateFileListR2D2():
-	R2D2_FileList = open("data/EXOT8/mc_r2d2.txt")
+	R2D2_FileList = open("data/v2/R2D2_data.txt")
 	for line in R2D2_FileList:
-		if "EXOT8" not in line: continue
+		# if "EXOT8" not in line: continue
 
 		line = line.split("\n")[0]
 		line = line.split("/")[0]
 
+		line_noscope = line.split(":")[1]
+
 		print "Processing",line,"..."
-		GenerateFileListR2D2(line, "SLAC-ATLAS-T3_GRIDFTP", "data/EXOT8/filelist_"+line+".txt")		
+		GenerateFileListR2D2(line, "SLAC-ATLAS-T3_GRIDFTP", "data/v2/filelist_"+line_noscope+".txt")		
 
 ###################################################################################################################################################
 # Generate Xsection File

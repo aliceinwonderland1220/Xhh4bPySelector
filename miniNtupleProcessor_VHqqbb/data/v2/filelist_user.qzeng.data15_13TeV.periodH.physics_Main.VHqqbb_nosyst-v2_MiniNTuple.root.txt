@@ -1,0 +1,10 @@
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/4f/e1/user.qzeng.8714827._000011.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/a0/a3/user.qzeng.8714827._000010.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/d1/94/user.qzeng.8714827._000008.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/f6/16/user.qzeng.8714827._000007.MiniNTuple.root.2
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/80/ad/user.qzeng.8714827._000009.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/7d/ee/user.qzeng.8714827._000005.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/71/8e/user.qzeng.8714827._000004.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/fc/72/user.qzeng.8714827._000003.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/10/b7/user.qzeng.8714827._000001.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/d9/b5/user.qzeng.8714827._000002.MiniNTuple.root

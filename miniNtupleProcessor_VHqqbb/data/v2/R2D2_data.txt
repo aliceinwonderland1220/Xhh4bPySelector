@@ -1,0 +1,6 @@
+user.qzeng:user.qzeng.data15_13TeV.periodD.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
+user.qzeng:user.qzeng.data15_13TeV.periodE.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
+user.qzeng:user.qzeng.data15_13TeV.periodF.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
+user.qzeng:user.qzeng.data15_13TeV.periodG.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
+user.qzeng:user.qzeng.data15_13TeV.periodH.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
+user.qzeng:user.qzeng.data15_13TeV.periodJ.physics_Main.VHqqbb_nosyst-v2_MiniNTuple.root
