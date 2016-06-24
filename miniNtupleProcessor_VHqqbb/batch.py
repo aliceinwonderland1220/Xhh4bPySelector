@@ -1,7 +1,8 @@
 import os
 import time
 
-sampleList = ["data", "WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
+# sampleList = ["data", "WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
+sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
 for sampleName in sampleList:
 	if sampleName == "JZXW":
 		nworkers = 200

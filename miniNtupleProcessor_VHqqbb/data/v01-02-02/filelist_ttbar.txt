@@ -1,0 +1,9 @@
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/9c/71/user.qzeng.8770617._000005.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/52/ed/user.qzeng.8770617._000007.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/e0/bf/user.qzeng.8770617._000003.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/02/20/user.qzeng.8770617._000004.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/f1/89/user.qzeng.8770617._000008.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/53/69/user.qzeng.8770617._000001.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/29/12/user.qzeng.8770617._000002.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/dq2/rucio/user/qzeng/f1/10/user.qzeng.8770617._000006.MiniNTuple.root
+root://atlprf01.slac.stanford.edu:1094//atlas/local/zengq/VHqqbb/MiniNtuples/v01-02-02/mc15_13TeV/filelist_ttbar_nonallhad.root

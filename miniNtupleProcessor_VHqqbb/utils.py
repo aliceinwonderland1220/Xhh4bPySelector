@@ -143,7 +143,7 @@ def GenerateFileListR2D2(datasetname, RSE, outputFileName):
 	f.close()
 
 def runGenerateFileListR2D2():
-	R2D2_FileList = open("data/v2/R2D2_data.txt")
+	R2D2_FileList = open("data/v01-02-02/R2D2_mc.txt")
 	for line in R2D2_FileList:
 		# if "EXOT8" not in line: continue
 
@@ -153,7 +153,7 @@ def runGenerateFileListR2D2():
 		line_noscope = line.split(":")[1]
 
 		print "Processing",line,"..."
-		GenerateFileListR2D2(line, "SLAC-ATLAS-T3_GRIDFTP", "data/v2/filelist_"+line_noscope+".txt")		
+		GenerateFileListR2D2(line, "SLAC-ATLAS-T3_GRIDFTP", "data/v01-02-02/filelist_"+line_noscope+".txt")		
 
 ###################################################################################################################################################
 # Generate Xsection File
@@ -232,14 +232,16 @@ def GenerateXsectionTable(scanDir, outputName):
 		h = f.Get("MetaData_EventCount")
 
 		# extract channel number
-		DSID = filename.split("/")[-1].split(".")[1]
-		xsec = float(PMGTool.GetInfo(DSID, "AMIXsec")) * 1000.  # pb -> fb
-		eff  = float(PMGTool.GetInfo(DSID, "BRorFiltEff"))
-		k    = float(PMGTool.GetInfo(DSID, "K-factor"))
+		DSID    = filename.split("/")[-1].split(".")[1]
+		xsec    = float(PMGTool.GetInfo(DSID, "AMIXsec")) * 1000.  # pb -> fb
+		BR      = float(PMGTool.GetInfo(DSID, "BR"))
+		FiltEff = float(PMGTool.GetInfo(DSID, "FiltEff"))
+		eff     = BR*FiltEff
+		k       = float(PMGTool.GetInfo(DSID, "K-factor"))
 		if "JZXW" in scanDir:
 			print "WARNING! You are using number of entries instead of sum of weights. This should only happen for JZXW sample!"
 			n = h.GetBinContent(1)    # number of entries before derivation
-			# n = h.GetBinContent(3)
+			# n = h.GetBinContent(3)    # temp 
 		else:
 			n = h.GetBinContent(3)    # sum of weights before derivation
 
