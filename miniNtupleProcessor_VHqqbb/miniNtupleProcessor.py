@@ -1279,8 +1279,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			if PassVtagging and (HMass >= self._HiggsMassCut[0]) and (HMass < self._HiggsMassCut[1]):
 				if nPassBtag >= 1: 
 					BlindRegion = True
-				elif (HCandidateJet.p + VCandidateJet.p).M() > 3000:
-					BlindRegion = True
+
+				# for 2015, no need to blind 0-tag above 3 TeV
+				# elif (HCandidateJet.p + VCandidateJet.p).M() > 3000:
+				# 	BlindRegion = True
 
 			if BlindRegion: return
 
