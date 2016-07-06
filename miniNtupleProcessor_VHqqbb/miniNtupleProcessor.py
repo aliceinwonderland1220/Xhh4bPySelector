@@ -141,7 +141,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		}
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
-		self._doBlindData = True                       # whether we blind the data
+		self._doBlindData = True    # touch            # whether we blind the data
 		self._doJERStudy  = False                      # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
