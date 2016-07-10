@@ -132,6 +132,7 @@ def runSys(sysName, doLite=False, nworkers=0):
 	######################################################################
 	dictOptions = {
 	                "OutputDir"   : os.environ['Xhh4bPySelector_dir']+"/miniNtupleProcessor_VHqqbb/outputSys/"+("FT/" if isBtagSys else "output"+sysName.replace(" ","_")),
+	                # "ChannelCut"  : 302321.,    # touch WH-1TeV
 	                # "ChannelCut"  : 302331.,   # touch, WH-2TeV
 	                # "ChannelCut"  : 302340.,     # touch, WH-5TeV
 	                "BtagSys"     : (sysName if isBtagSys else ""),
@@ -195,7 +196,7 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02_sys/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."

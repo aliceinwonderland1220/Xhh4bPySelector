@@ -156,29 +156,36 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Luminosity
 		# touch
 
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v79-pro20-05_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2015 GRL for 2015 Moriond
-		self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
+		# 2015 reprocessed
+		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
+		# self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
 		                              # https://atlas-lumicalc.cern.ch/results/c7cd57/result.html
+
+		# 2016
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v79-pro20-05_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		# self._Lumi = 3.49756          # https://atlas-lumicalc.cern.ch/results/1c8971/result.html
+
+		# 2015 + 2016 -- for MC
+		self._Lumi = 3.19368 + 3.49756
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02_sys/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
+		# touch
 
-		self._doMttStitch = False                  # whether we do the mtt stitch
+		self._doMttStitch = True                  # whether we do the mtt stitch
 		self._MttStitchCut = 1100.                 # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.0                # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.0             # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.27075067539                # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.00960695548             # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		# trigger
 		# touch
 
-		# self._TriggerList = ["HLT_j400_a10r_L1J100"]            # 2016 trigger
-		self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
+		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
+		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
 		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
@@ -199,7 +206,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
 		self._TrackJetWP = "MV2c10_77" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
-		self._ResetSF = True                           # if True, then SF all reset to 1.
+		self._ResetSF = False                           # if True, then SF all reset to 1.
 
 		# muon correction
 
@@ -594,8 +601,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#
 
 		if self._doTriggerCut:
-			if "OR" not in PassedTriggerList:
-				return
+
+			if _isMC:
+				# have to do the trigger emulation of HLT_j420_a10_lcw_L1J100 on MC
+				if not self.MCTriggerEmulation(tree):
+					return
+			else:
+				if "OR" not in PassedTriggerList:
+					return
 
 		self.MakeCutflowPlot(tree, "PassTrigger", _isMC)
 
@@ -728,6 +741,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.AutoFill("GoodEvent", "_BeforeCaloJetKinematicCut", "LeadCaloJetPt", LeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
 			histsvc.AutoFill("GoodEvent", "_BeforeCaloJetKinematicCut", "SubLeadCaloJetPt", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 50, 100, 3100)
 
+			histsvc.AutoFill("GoodEvent", "_BeforeCaloJetKinematicCut", "LeadCaloJetPt_fine", LeadCaloJet.p.Pt(), self._EvtWeight[0], 150, 0, 3000)
+			histsvc.AutoFill("GoodEvent", "_BeforeCaloJetKinematicCut", "SubLeadCaloJetPt_fine", SubLeadCaloJet.p.Pt(), self._EvtWeight[0], 150, 0, 3000)
+
+		# temporary hack
+		# touch
+		# return
 
 		#
 		# Calo-Jet Response (for MC Only). Should be before muon correciton
@@ -1658,6 +1677,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		CaloJet.Set("MuonCorrectedMassIfHiggs", CorrectedMass)
 
 		return (PassBtag and PassMassWindow)
+
+	def MCTriggerEmulation(self, tree):
+		# reference trigger
+		if "HLT_j300_a10_lcw_sub_L1J75" not in tree.passedTriggers:
+			return False
+
+		# at least one large-R jet
+		if tree.hcand_boosted_n < 1:
+			return False
+
+		# pass 420 GeV (in principle this should be the untrimmed large-R jet ... but whatever ...)
+		if tree.hcand_boosted_pt[0]/1000. < 420.:
+			return False
+
+		# OK
+		return True
+
 
 
 

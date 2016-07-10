@@ -208,6 +208,8 @@ def GenerateXsectionTable(scanDir, outputName):
 	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Multijet_Download.txt",
 	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Wjets_Other_Download.txt",
 	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_Zjets_Other_Download.txt",
+	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_TTbarBulk_Download.txt",
+	                os.environ['Xhh4bPySelector_dir'] + '/External/PMGCrossSectionTool/data/' + "list_Xsec_TTbar_Download.txt",
 	              ]
 	PMGTool.ReadData(PMGFileList)
 
