@@ -85,5 +85,5 @@ def main(dirname, outputNameBase, outputDir):
 		RunMerge(item, outputNameBase, outputDir)
 
 if __name__ == "__main__":
-	sampleName = "ttbar"
+	sampleName = "WH_FixVtag"
 	main("outputSys_"+sampleName, "hist_"+sampleName, "hist_%s_reduced" % (sampleName))

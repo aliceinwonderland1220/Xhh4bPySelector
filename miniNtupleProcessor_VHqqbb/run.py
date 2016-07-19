@@ -30,8 +30,60 @@ filename = ""
 # btagging systematics #
 ########################
 
+# CDI June27-2016 version
+# Should be in total 50+1 b-tagging systematics
 FT_SysNameList = [
                   '',
+                  'FT_EFF_Eigen_B_0__1up',
+                  'FT_EFF_Eigen_B_0__1down',
+                  'FT_EFF_Eigen_B_1__1up',
+                  'FT_EFF_Eigen_B_1__1down',
+                  'FT_EFF_Eigen_B_2__1up',
+                  'FT_EFF_Eigen_B_2__1down',
+                  'FT_EFF_Eigen_B_3__1up',
+                  'FT_EFF_Eigen_B_3__1down',
+                  'FT_EFF_Eigen_B_4__1up',
+                  'FT_EFF_Eigen_B_4__1down',
+                  'FT_EFF_Eigen_C_0__1up',
+                  'FT_EFF_Eigen_C_0__1down',
+                  'FT_EFF_Eigen_C_1__1up',
+                  'FT_EFF_Eigen_C_1__1down',
+                  'FT_EFF_Eigen_C_2__1up',
+                  'FT_EFF_Eigen_C_2__1down',
+                  'FT_EFF_Eigen_C_3__1up',
+                  'FT_EFF_Eigen_C_3__1down',
+                  'FT_EFF_Eigen_Light_0__1up',
+                  'FT_EFF_Eigen_Light_0__1down',
+                  'FT_EFF_Eigen_Light_1__1up',
+                  'FT_EFF_Eigen_Light_1__1down',
+                  'FT_EFF_Eigen_Light_2__1up',
+                  'FT_EFF_Eigen_Light_2__1down',
+                  'FT_EFF_Eigen_Light_3__1up',
+                  'FT_EFF_Eigen_Light_3__1down',
+                  'FT_EFF_Eigen_Light_4__1up',
+                  'FT_EFF_Eigen_Light_4__1down',
+                  'FT_EFF_Eigen_Light_5__1up',
+                  'FT_EFF_Eigen_Light_5__1down',
+                  'FT_EFF_Eigen_Light_6__1up',
+                  'FT_EFF_Eigen_Light_6__1down',
+                  'FT_EFF_Eigen_Light_7__1up',
+                  'FT_EFF_Eigen_Light_7__1down',
+                  'FT_EFF_Eigen_Light_8__1up',
+                  'FT_EFF_Eigen_Light_8__1down',
+                  'FT_EFF_Eigen_Light_9__1up',
+                  'FT_EFF_Eigen_Light_9__1down',
+                  'FT_EFF_Eigen_Light_10__1up',
+                  'FT_EFF_Eigen_Light_10__1down',
+                  'FT_EFF_Eigen_Light_11__1up',
+                  'FT_EFF_Eigen_Light_11__1down',
+                  'FT_EFF_Eigen_Light_12__1up',
+                  'FT_EFF_Eigen_Light_12__1down',
+                  'FT_EFF_Eigen_Light_13__1up',
+                  'FT_EFF_Eigen_Light_13__1down',
+                  'FT_EFF_extrapolation__1up',
+                  'FT_EFF_extrapolation__1down',
+                  'FT_EFF_extrapolation from charm__1up',
+                  'FT_EFF_extrapolation from charm__1down',
                  ]
 
 def loadDataset(treename, filename):
@@ -203,17 +255,27 @@ def runShell():
 		os.system("rm -rf outputSys")
 
 		nonbtagSysList = [
-		           "JET_Hbb_Run1_pT__1up", 
-		           "JET_Hbb_Run1_pT__1down", 
-		           "JET_Hbb_Run1_mass__1up",
-		           "JET_Hbb_Run1_mass__1down",
-		           "JET_Hbb_CrossCalib_pT__1up", 
-		           "JET_Hbb_CrossCalib_pT__1down", 
-		           "JET_Hbb_CrossCalib_mass__1up",
-		           "JET_Hbb_CrossCalib_mass__1down",
-		           "JET_JER",
-		           "JET_JMR",
-		          ]
+		                   "JET_Rtrk_Baseline_Kin__1up",
+		                   "JET_Rtrk_Baseline_Kin__1down",
+		                   "JET_Rtrk_Tracking_Kin__1up",
+		                   "JET_Rtrk_Tracking_Kin__1down",
+		                   "JET_Rtrk_Modelling_Kin__1up",
+		                   "JET_Rtrk_Modelling_Kin__1down",
+		                   "JET_Rtrk_TotalStat_Kin__1up",
+		                   "JET_Rtrk_TotalStat_Kin__1down",
+
+		                   "JET_Rtrk_Baseline_Sub__1up",
+		                   "JET_Rtrk_Baseline_Sub__1down",
+		                   "JET_Rtrk_Tracking_Sub__1up",
+		                   "JET_Rtrk_Tracking_Sub__1down",
+		                   "JET_Rtrk_Modelling_Sub__1up",
+		                   "JET_Rtrk_Modelling_Sub__1down",
+		                   "JET_Rtrk_TotalStat_Sub__1up",
+		                   "JET_Rtrk_TotalStat_Sub__1down",
+
+		                   "JET_JER",
+		                   "JET_JMR",
+		                 ]
 
 		btagSysList = []
 		for item in FT_SysNameList:
@@ -222,8 +284,9 @@ def runShell():
 				btagSysList.append(item_shortcut)
 
 		# put b-tagging first
-		sysList = [",".join(btagSysList)] + nonbtagSysList
-		# sysList = nonbtagSysList
+		# sysList = [",".join(btagSysList)] + nonbtagSysList
+		sysList = [",".join(btagSysList)]                 # b-tagging only
+		# sysList = nonbtagSysList                        # non b-tagging only
 
 		print "Batch processing systematics list:"
 		print sysList

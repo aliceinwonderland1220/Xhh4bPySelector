@@ -141,7 +141,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		}
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
-		self._doBlindData = True    # touch            # whether we blind the data
+		self._doBlindData = False    # touch            # whether we blind the data
 		self._doJERStudy  = False                      # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
@@ -163,10 +163,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v79-pro20-05_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		# self._Lumi = 3.49756          # https://atlas-lumicalc.cern.ch/results/1c8971/result.html
+		self._Lumi = 3.49756          # https://atlas-lumicalc.cern.ch/results/1c8971/result.html
 
 		# 2015 + 2016 -- for MC
-		self._Lumi = 3.19368 + 3.49756
+		# self._Lumi = 3.19368 + 3.49756
 
 		# X-section
 
