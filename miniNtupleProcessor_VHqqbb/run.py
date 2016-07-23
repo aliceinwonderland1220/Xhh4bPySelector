@@ -248,7 +248,7 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02_sys/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."
@@ -284,8 +284,8 @@ def runShell():
 				btagSysList.append(item_shortcut)
 
 		# put b-tagging first
-		# sysList = [",".join(btagSysList)] + nonbtagSysList
-		sysList = [",".join(btagSysList)]                 # b-tagging only
+		sysList = [",".join(btagSysList)] + nonbtagSysList
+		# sysList = [",".join(btagSysList)]                 # b-tagging only
 		# sysList = nonbtagSysList                        # non b-tagging only
 
 		print "Batch processing systematics list:"

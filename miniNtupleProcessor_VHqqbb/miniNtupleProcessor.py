@@ -171,7 +171,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-02_sys/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
@@ -189,9 +189,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
 		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
-		# lepton veto
+		# lepton/MET veto
 
 		self._doLeptonVeto = True   # touch                  # no "loose" lepton in the event
+		self._doMETVeto = True      # touch                 
 
 		# calo-jet
 
@@ -1146,6 +1147,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassVHAmbiguity", _isMC)
 		self.MakeCutflowPlot(tree, "PassVHAmbiguity", _isMC)
+
+		############
+		# MET Veto #
+		############
+
+		if self._doMETVeto:
+
+			passMETsumCut = (tree.METsum/1000. > 150.)
+
+			dPhi_HcandMET = abs(tree.METphi - HCandidateJet.p.Phi())
+			if(dPhi_HcandMET > ROOT.TMath.Pi()): dPhi_HcandMET = 2*ROOT.TMath.Pi() - dPhi_HcandMET
+			passMETdphiCut = (dPhi_HcandMET > 120.*ROOT.TMath.Pi()/180.)
+
+			if passMETsumCut and passMETdphiCut: return
+
+			for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassMETVetoCut", _isMC)
+			self.MakeCutflowPlot(tree, "PassMETVetoCut", _isMC)
 
 		# probability of getting correct VH assignment #
 
