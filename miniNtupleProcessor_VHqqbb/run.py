@@ -248,7 +248,7 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04_DS2/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."
@@ -275,6 +275,7 @@ def runShell():
 
 		                   "JET_JER",
 		                   "JET_JMR",
+		                   "JET_JD2R",
 		                 ]
 
 		btagSysList = []

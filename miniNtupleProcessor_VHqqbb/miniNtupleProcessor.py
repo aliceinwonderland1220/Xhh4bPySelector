@@ -142,7 +142,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = False    # touch            # whether we blind the data
-		self._doJERStudy  = False                      # turn on JERStudy --- basically the truth response stuffs
+		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
@@ -157,21 +157,21 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# touch
 
 		# 2015 reprocessed
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
-		# self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
+		self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
 		                              # https://atlas-lumicalc.cern.ch/results/c7cd57/result.html
 
 		# 2016
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v79-pro20-05_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._Lumi = 3.49756          # https://atlas-lumicalc.cern.ch/results/1c8971/result.html
+		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v80-pro20-08_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		# self._Lumi = 10.0643          # https://atlas-lumicalc.cern.ch/results/6a965/result.html
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.19368 + 3.49756
+		# self._Lumi = 3.19368 + 10.0643
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04_DS2/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
@@ -184,8 +184,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# trigger
 		# touch
 
-		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
-		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
+		# self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
+		self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
 		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
@@ -267,6 +267,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                        ]
 
 		self.EventVarListPython__base = [
+		                       "RunNumber",
+		                       "EventNumber",
 		                       "EventWeight",
 		                       "ChannelNumber",
 		                       "nPassBtag",
@@ -1419,6 +1421,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				PassNtupleCut = True
 
 				if PassNtupleCut:
+					ntuplesvc_tinytree.SetEventValue("RunNumber", tree.runNumber)
+					ntuplesvc_tinytree.SetEventValue("EventNumber", tree.eventNumber)
 					ntuplesvc_tinytree.SetEventValue("EventWeight", self._EvtWeight[0])
 
 					# Event Level #
@@ -1614,11 +1618,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				if TruthMatched:
 					MatchedTruthJet = ROOT.TLorentzVector()
 					MatchedTruthJet.SetPtEtaPhiM(tree.truth_hcand_boosted_pt[iCaloJet]/1000., tree.truth_hcand_boosted_eta[iCaloJet], tree.truth_hcand_boosted_phi[iCaloJet], tree.truth_hcand_boosted_m[iCaloJet]/1000.)
+					MatchedTruthJetD2 = tree.truth_hcand_boosted_d2[iCaloJet]
 
 					# Inclusive mass bin
 					histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetPtResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
-					if MatchedTruthJet.E() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
-					if MatchedTruthJet.M() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJet.E() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJet.M() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse__"+CutName, MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJetD2 > 0   :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetD2Response__"+CutName, MatchedTruthJet.Pt(), (CaloJet.Double("D2"))/(MatchedTruthJetD2), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
 
 					TruthMass = MatchedTruthJet.M()
 					if TruthMass < 50:
@@ -1632,8 +1638,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 					# Exclusive mass bin
 					histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetPtResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
-					if MatchedTruthJet.E() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
-					if MatchedTruthJet.M() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJet.E() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetEResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJet.M() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetMResponse_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
+					if MatchedTruthJetD2 > 0   :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthPt_CaloJetD2Response_%s__%s" % (MassBin, CutName), MatchedTruthJet.Pt(), (CaloJet.Double("D2"))/(MatchedTruthJetD2), self._EvtWeight[0], 40, 0, 2000, 200, 0, 2)
 
 	# measure the response as function of m/pT, in bins of pT
 	def MakeJERPlots2(self, tree, CaloJetList, CutName):
@@ -1646,13 +1653,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				if TruthMatched:
 					MatchedTruthJet = ROOT.TLorentzVector()
 					MatchedTruthJet.SetPtEtaPhiM(tree.truth_hcand_boosted_pt[iCaloJet]/1000., tree.truth_hcand_boosted_eta[iCaloJet], tree.truth_hcand_boosted_phi[iCaloJet], tree.truth_hcand_boosted_m[iCaloJet]/1000.)
+					MatchedTruthJetD2 = tree.truth_hcand_boosted_d2[iCaloJet]
 
 					TruthBoost = MatchedTruthJet.M()/MatchedTruthJet.Pt()
 
 					# Inclusive pt bin
 					histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetPtResponse__"+CutName, TruthBoost, (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
-					if MatchedTruthJet.E() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse__"+CutName, TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
-					if MatchedTruthJet.M() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse__"+CutName, TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJet.E() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse__"+CutName, TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJet.M() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse__"+CutName, TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJetD2 > 0   :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetD2Response__"+CutName, TruthBoost, (CaloJet.Double("D2"))/(MatchedTruthJetD2), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
 
 					TruthMass = MatchedTruthJet.M()
 					if TruthMass < 50:
@@ -1666,8 +1675,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 					# Exclusive pt bin
 					histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetPtResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.Pt())/(MatchedTruthJet.Pt()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
-					if MatchedTruthJet.E() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
-					if MatchedTruthJet.M() > 0:  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJet.E() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetEResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.E())/(MatchedTruthJet.E()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJet.M() > 0 :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetMResponse_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.p.M())/(MatchedTruthJet.M()), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
+					if MatchedTruthJetD2 > 0   :  histsvc.AutoFill("GoodEvent", "_JERStudy", "TruthBoost_CaloJetD2Response_%s__%s" % (MassBin, CutName), TruthBoost, (CaloJet.Double("D2"))/(MatchedTruthJetD2), self._EvtWeight[0], 10, 0, 1, 200, 0, 2)
 
 	# emulate the Higgs tagging
 	# Make sure one has already done the muon association to track-jets from calo-jet
