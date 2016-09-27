@@ -187,7 +187,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
 		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
-		self._doTriggerCut = False # True                               # When one wants to do the trigger study, make sure this option is turned OFF !
+		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
 		# lepton/MET veto
 
@@ -774,8 +774,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#
 
 		# if LeadCaloJet.p.Pt() < 350.:      return
-		# if LeadCaloJet.p.Pt() < 450.:      return       # touch
-		if LeadCaloJet.p.Pt() < 250.:      return       # touch
+		if LeadCaloJet.p.Pt() < 450.:      return       # touch
+		# if LeadCaloJet.p.Pt() < 250.:      return       # touch
 		if abs(LeadCaloJet.p.Eta()) > 2.0: return
 
 		if SubLeadCaloJet.p.Pt() < 250.:      return
