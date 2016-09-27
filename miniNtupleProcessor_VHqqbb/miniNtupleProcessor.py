@@ -157,16 +157,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# touch
 
 		# 2015 reprocessed
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
-		self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
+		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
+		# self._Lumi = 3.19368          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
 		                              # https://atlas-lumicalc.cern.ch/results/c7cd57/result.html
 
 		# 2016
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v80-pro20-08_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v80-pro20-08_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
 		# self._Lumi = 10.0643          # https://atlas-lumicalc.cern.ch/results/6a965/result.html
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.19368 + 10.0643
+		self._Lumi = 3.19368 + 10.0643
 
 		# X-section
 
@@ -184,10 +184,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# trigger
 		# touch
 
-		# self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
-		self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
+		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
+		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
-		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
+		self._doTriggerCut = False # True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
 		# lepton/MET veto
 
@@ -774,7 +774,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		#
 
 		# if LeadCaloJet.p.Pt() < 350.:      return
-		if LeadCaloJet.p.Pt() < 450.:      return       # touch
+		# if LeadCaloJet.p.Pt() < 450.:      return       # touch
+		if LeadCaloJet.p.Pt() < 250.:      return       # touch
 		if abs(LeadCaloJet.p.Eta()) > 2.0: return
 
 		if SubLeadCaloJet.p.Pt() < 250.:      return
