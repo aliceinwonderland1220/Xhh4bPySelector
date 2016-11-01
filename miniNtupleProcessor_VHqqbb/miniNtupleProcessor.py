@@ -171,12 +171,12 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04_DS2/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v10-26-2016/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
 
-		self._doMttStitch = True                  # whether we do the mtt stitch
+		self._doMttStitch = False # True  touch                  # whether we do the mtt stitch
 		self._MttStitchCut = 1100.                 # the cut on inclusive ttbar sample of mtt value
 		self._MttScale_allhad = 1.27075067539                # the scale factor applied on allhad mtt slices when doing stitching
 		self._MttScale_nonallhad = 1.00960695548             # the scale factor applied on nonallhad mtt slices when doing stitching
@@ -207,7 +207,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
 		self._TrackJetWP = "MV2c10_77" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
-		self._ResetSF = False                           # if True, then SF all reset to 1.
+		self._ResetSF = True  # touch                         # if True, then SF all reset to 1.
 
 		# muon correction
 
@@ -320,10 +320,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "LeadTrackJet_VCandidateJet_Eta",
 		                       "SubLeadTrackJet_VCandidateJet_Eta",
 
-		                       # "LeadTrackJet_HCandidateJet_MV2c20",
-		                       # "SubLeadTrackJet_HCandidateJet_MV2c20",
-		                       # "LeadTrackJet_VCandidateJet_MV2c20",
-		                       # "SubLeadTrackJet_VCandidateJet_MV2c20",
+		                       "LeadTrackJet_HCandidateJet_MV2c10",
+		                       "SubLeadTrackJet_HCandidateJet_MV2c10",
+		                       "LeadTrackJet_VCandidateJet_MV2c10",
+		                       "SubLeadTrackJet_VCandidateJet_MV2c10",
 		                     ]
 
 		self.EventVarListPython = self.EventVarListPython__base + self.EventVarListPython__kinematic
@@ -430,7 +430,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			histsvc.Book(TrackJetName + "_Phi", TrackJetName + "_Phi", self._EvtWeight, 140, -3.5, 3.5)
 			histsvc.Book(TrackJetName + "_M", TrackJetName + "_M", self._EvtWeight, 100, 0, 1000)
 			histsvc.Book(TrackJetName + "_E", TrackJetName + "_E", self._EvtWeight, 100, 0, 1000)
-			# histsvc.Book(TrackJetName + "_MV2c20", TrackJetName + "_MV2c20", self._EvtWeight, 220, -1.1, 1.1)
+			histsvc.Book(TrackJetName + "_MV2c10", TrackJetName + "_MV2c10", self._EvtWeight, 220, -1.1, 1.1)
 
 		output['histsvc'] = histsvc
 
@@ -1479,10 +1479,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_VCandidateJet_Eta", histsvc.Get("LeadTrackJet_VCandidateJet_Eta", -100, True))
 					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_VCandidateJet_Eta", histsvc.Get("SubLeadTrackJet_VCandidateJet_Eta", -100, True))
 
-					# ntuplesvc_tinytree.SetEventValue("LeadTrackJet_HCandidateJet_MV2c20", histsvc.Get("LeadTrackJet_HCandidateJet_MV2c20", -100, True))
-					# ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_HCandidateJet_MV2c20", histsvc.Get("SubLeadTrackJet_HCandidateJet_MV2c20", -100, True))
-					# ntuplesvc_tinytree.SetEventValue("LeadTrackJet_VCandidateJet_MV2c20", histsvc.Get("LeadTrackJet_VCandidateJet_MV2c20", -100, True))
-					# ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_VCandidateJet_MV2c20", histsvc.Get("SubLeadTrackJet_VCandidateJet_MV2c20", -100, True))
+					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_HCandidateJet_MV2c10", histsvc.Get("LeadTrackJet_HCandidateJet_MV2c10", -100, True))
+					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_HCandidateJet_MV2c10", histsvc.Get("SubLeadTrackJet_HCandidateJet_MV2c10", -100, True))
+					ntuplesvc_tinytree.SetEventValue("LeadTrackJet_VCandidateJet_MV2c10", histsvc.Get("LeadTrackJet_VCandidateJet_MV2c10", -100, True))
+					ntuplesvc_tinytree.SetEventValue("SubLeadTrackJet_VCandidateJet_MV2c10", histsvc.Get("SubLeadTrackJet_VCandidateJet_MV2c10", -100, True))
 
 					# Obj Level # (SF info)
 					ntuplesvc_tinytree.SetObjValue("SFList", SFList)
@@ -1565,7 +1565,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				histsvc.Set(TrackJetName + "_Phi", TrackJet.p.Phi())
 				histsvc.Set(TrackJetName + "_M", TrackJet.p.M())
 				histsvc.Set(TrackJetName + "_E", TrackJet.p.E())
-				# histsvc.Set(TrackJetName + "_MV2c20", TrackJet.Double("MV2c20"))
+				histsvc.Set(TrackJetName + "_MV2c10", TrackJet.Double("MV2c10"))
 
 	def PassMuonQualityCut(self, tree, iMuon):
 		# muon quality branches are stored exclusively!
