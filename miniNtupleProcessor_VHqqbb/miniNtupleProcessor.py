@@ -162,8 +162,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                              # https://atlas-lumicalc.cern.ch/results/c7cd57/result.html
 
 		# 2016
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v80-pro20-08_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		# self._Lumi = 10.0643          # https://atlas-lumicalc.cern.ch/results/6a965/result.html
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		# self._Lumi = 15.8669          # https://atlas-lumicalc.cern.ch/results/22ba15/result.html
 
 		# 2015 + 2016 -- for MC
 		self._Lumi = 3.19368 + 10.0643
@@ -171,7 +171,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v10-26-2016/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch

@@ -249,9 +249,7 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04_DS2/filelist_%s.txt" % (options.sampleName)
-	# filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v01-02-04_DS2_ForReina/filelist_%s.txt" % (options.sampleName)
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v10-26-2016/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."
