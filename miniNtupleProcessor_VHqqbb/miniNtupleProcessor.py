@@ -141,7 +141,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		}
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
-		self._doBlindData = False    # touch            # whether we blind the data
+		self._doBlindData = True    # touch            # whether we blind the data
 		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
@@ -163,10 +163,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		# self._Lumi = 15.8669          # https://atlas-lumicalc.cern.ch/results/22ba15/result.html
+		self._Lumi = 15.0204          # https://atlas-lumicalc.cern.ch/results/22ba15/result.html
 
 		# 2015 + 2016 -- for MC
-		self._Lumi = 3.19368 + 10.0643
+		# self._Lumi = 3.19368 + 15.0204
 
 		# X-section
 
@@ -207,7 +207,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._TrackJetPtCut = 10.
 		self._TrackJetEtaCut = 2.5
 		self._TrackJetWP = "MV2c10_77" # touch                # Only one WP now. Make sure this is consistent with the calibration used during mini-ntuple production. Otherwise, please reset SF to be 1.
-		self._ResetSF = True  # touch                         # if True, then SF all reset to 1.
+		self._ResetSF = False  # touch                         # if True, then SF all reset to 1.
 
 		# muon correction
 
