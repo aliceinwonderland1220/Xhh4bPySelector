@@ -163,23 +163,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._Lumi = 15.0204          # https://atlas-lumicalc.cern.ch/results/22ba15/result.html
+		self._Lumi = 16.9669          # https://atlas-lumicalc.cern.ch/results/c489b6/result.html (period-E to period-K)
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.19368 + 15.0204
+		# self._Lumi = 16.9669
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01_updated/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
 
-		self._doMttStitch = False # True  touch                  # whether we do the mtt stitch
+		self._doMttStitch = True  #touch                  # whether we do the mtt stitch
 		self._MttStitchCut = 1100.                 # the cut on inclusive ttbar sample of mtt value
-		self._MttScale_allhad = 1.27075067539                # the scale factor applied on allhad mtt slices when doing stitching
-		self._MttScale_nonallhad = 1.00960695548             # the scale factor applied on nonallhad mtt slices when doing stitching
+		self._MttScale_allhad = 1.27079431165                # the scale factor applied on allhad mtt slices when doing stitching
+		self._MttScale_nonallhad = 1.02168410332             # the scale factor applied on nonallhad mtt slices when doing stitching
 
 		# trigger
 		# touch
