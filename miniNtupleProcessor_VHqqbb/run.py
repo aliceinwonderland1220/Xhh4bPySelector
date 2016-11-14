@@ -82,8 +82,8 @@ FT_SysNameList = [
                   'FT_EFF_Eigen_Light_13__1down',
                   'FT_EFF_extrapolation__1up',
                   'FT_EFF_extrapolation__1down',
-                  'FT_EFF_extrapolation from charm__1up',
-                  'FT_EFF_extrapolation from charm__1down',
+                  'FT_EFF_extrapolation_from_charm__1up',
+                  'FT_EFF_extrapolation_from_charm__1down',
                  ]
 
 def loadDataset(treename, filename):
@@ -145,8 +145,9 @@ def runSys(sysName, doLite=False, nworkers=0):
 	sysNameItemList = []
 	for sysNameItem in sysName.split(","):
 		# a very stupid hard-coding ...
-		if "FT_EFF_extrapolation_from_charm" in sysNameItem:
-			sysNameItem = "FT_EFF_extrapolation from charm" + "__" + sysNameItem.split("__")[1]
+		# No longer needed, since there is underscore in the CDI sysname now
+		# if "FT_EFF_extrapolation_from_charm" in sysNameItem:
+		# 	sysNameItem = "FT_EFF_extrapolation from charm" + "__" + sysNameItem.split("__")[1]
 
 		# special handle on Nominal
 		if sysNameItem == "Nominal":

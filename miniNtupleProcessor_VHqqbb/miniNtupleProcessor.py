@@ -294,6 +294,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "HCandidateJetTau21WTA",
 		                       "HCandidateJetNTrack",
 		                       "HCandidateJetIsVtagged",
+		                       "HCandidateJetNTrackJet",
 
 		                       "VCandidateJetPt",
 		                       "VCandidateJetEta",
@@ -306,6 +307,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		                       "VCandidateJetIsVtagged",
 		                       "VCandidateJetWtagCode",
 		                       "VCandidateJetZtagCode",
+		                       "VCandidateJetNTrackJet",
 
 		                       "dRjj_HCandidateJet",
 		                       "dRjj_VCandidateJet",
@@ -709,6 +711,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet.Set("nHBosons", tree.hcand_boosted_nHBosons[0])
 		LeadCaloJet.Set("nWBosons", tree.hcand_boosted_nWBosons[0])
 		LeadCaloJet.Set("nZBosons", tree.hcand_boosted_nZBosons[0])
+		LeadCaloJet.Set("nTrackJet", tree.jet_ak2track_asso_n[0])
 
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
@@ -731,6 +734,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		SubLeadCaloJet.Set("nHBosons", tree.hcand_boosted_nHBosons[1])
 		SubLeadCaloJet.Set("nWBosons", tree.hcand_boosted_nWBosons[1])
 		SubLeadCaloJet.Set("nZBosons", tree.hcand_boosted_nZBosons[1])
+		SubLeadCaloJet.Set("nTrackJet", tree.jet_ak2track_asso_n[1])
 
 		CaloJetList = [LeadCaloJet, SubLeadCaloJet]
 
@@ -1453,6 +1457,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetTau21WTA", histsvc.Get("HCandidateJetTau21WTA"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetNTrack", histsvc.Get("HCandidateJetNTrack"))
 					ntuplesvc_tinytree.SetEventValue("HCandidateJetIsVtagged", HCandidateJet.Double("WZTagged"))
+					ntuplesvc_tinytree.SetEventValue("HCandidateJetNTrackJet", HCandidateJet.Double("nTrackJet"))
 
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetPt", histsvc.Get("VCandidateJetPt"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetEta", histsvc.Get("VCandidateJetEta"))
@@ -1465,6 +1470,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetIsVtagged", VCandidateJet.Double("WZTagged"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetWtagCode", VCandidateJet.Double("WtagCode"))
 					ntuplesvc_tinytree.SetEventValue("VCandidateJetZtagCode", VCandidateJet.Double("ZtagCode"))
+					ntuplesvc_tinytree.SetEventValue("VCandidateJetNTrackJet", VCandidateJet.Double("nTrackJet"))
 
 					ntuplesvc_tinytree.SetEventValue("dRjj_HCandidateJet", histsvc.Get("dRjj_HCandidateJet", -100, True))
 					ntuplesvc_tinytree.SetEventValue("dRjj_VCandidateJet", histsvc.Get("dRjj_VCandidateJet", -100, True))
