@@ -30,8 +30,8 @@ filename = ""
 # btagging systematics #
 ########################
 
-# CDI June27-2016 version
-# Should be in total 50+1 b-tagging systematics
+# CDI 2016-20_7-13TeV-MC15-CDI-2016-11-25_v1.root
+# Should be in total 52+1 b-tagging systematics
 FT_SysNameList = [
                   '',
                   'FT_EFF_Eigen_B_0__1up',
@@ -52,6 +52,8 @@ FT_SysNameList = [
                   'FT_EFF_Eigen_C_2__1down',
                   'FT_EFF_Eigen_C_3__1up',
                   'FT_EFF_Eigen_C_3__1down',
+                  'FT_EFF_Eigen_C_4__1up',
+                  'FT_EFF_Eigen_C_4__1down',
                   'FT_EFF_Eigen_Light_0__1up',
                   'FT_EFF_Eigen_Light_0__1down',
                   'FT_EFF_Eigen_Light_1__1up',
@@ -250,7 +252,7 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01_updated/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v11-29-2016/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."

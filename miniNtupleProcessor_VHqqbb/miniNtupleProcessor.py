@@ -163,15 +163,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._Lumi = 16.9669          # https://atlas-lumicalc.cern.ch/results/c489b6/result.html (period-E to period-K)
+		# self._Lumi = 16.9669          # https://atlas-lumicalc.cern.ch/results/c489b6/result.html (period-E to period-K)
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 16.9669
+		self._Lumi = 36.5
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-00-02-01_updated/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v11-29-2016/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch

@@ -1,14 +1,16 @@
 import os
 import time
 
+configName = "CombMassOnly"
 sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
+
 for sampleName in sampleList:
 	if sampleName == "JZXW":
 		nworkers = 200
 	else:
-		nworkers = 70
+		nworkers = 50
 
-	cmd = "python run.py -f %s -n %s" % (sampleName, nworkers)
+	cmd = "python run.py -f %s -n %s" % (sampleName+"_"+configName, nworkers)
 	print cmd
 	os.system(cmd)
 	time.sleep(2)
