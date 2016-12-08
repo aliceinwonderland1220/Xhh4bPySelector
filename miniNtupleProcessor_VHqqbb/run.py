@@ -259,27 +259,48 @@ def runShell():
 		os.system("rm -rf outputSys")
 
 		nonbtagSysList = [
-		                   "JET_Rtrk_Baseline_Kin__1up",
-		                   "JET_Rtrk_Baseline_Kin__1down",
-		                   "JET_Rtrk_Tracking_Kin__1up",
-		                   "JET_Rtrk_Tracking_Kin__1down",
-		                   "JET_Rtrk_Modelling_Kin__1up",
-		                   "JET_Rtrk_Modelling_Kin__1down",
-		                   "JET_Rtrk_TotalStat_Kin__1up",
-		                   "JET_Rtrk_TotalStat_Kin__1down",
+		                   # calo-mass version
+		                   # "JET_Rtrk_Baseline_Kin__1up",
+		                   # "JET_Rtrk_Baseline_Kin__1down",
+		                   # "JET_Rtrk_Tracking_Kin__1up",
+		                   # "JET_Rtrk_Tracking_Kin__1down",
+		                   # "JET_Rtrk_Modelling_Kin__1up",
+		                   # "JET_Rtrk_Modelling_Kin__1down",
+		                   # "JET_Rtrk_TotalStat_Kin__1up",
+		                   # "JET_Rtrk_TotalStat_Kin__1down",
+
+		                   # "JET_Rtrk_Baseline_Sub__1up",
+		                   # "JET_Rtrk_Baseline_Sub__1down",
+		                   # "JET_Rtrk_Tracking_Sub__1up",
+		                   # "JET_Rtrk_Tracking_Sub__1down",
+		                   # "JET_Rtrk_Modelling_Sub__1up",
+		                   # "JET_Rtrk_Modelling_Sub__1down",
+		                   # "JET_Rtrk_TotalStat_Sub__1up",
+		                   # "JET_Rtrk_TotalStat_Sub__1down",
+
+		                   # combined mass version
+		                   "JET_Comb_Baseline_Kin__1up",
+		                   "JET_Comb_Baseline_Kin__1down",
+		                   "JET_Comb_Modelling_Kin__1up",
+		                   "JET_Comb_Modelling_Kin__1down",
+		                   "JET_Comb_TotalStat_Kin__1up",
+		                   "JET_Comb_TotalStat_Kin__1down",
+		                   "JET_Comb_Tracking_Kin__1up",
+		                   "JET_Comb_Tracking_Kin__1down",
 
 		                   "JET_Rtrk_Baseline_Sub__1up",
 		                   "JET_Rtrk_Baseline_Sub__1down",
-		                   "JET_Rtrk_Tracking_Sub__1up",
-		                   "JET_Rtrk_Tracking_Sub__1down",
 		                   "JET_Rtrk_Modelling_Sub__1up",
 		                   "JET_Rtrk_Modelling_Sub__1down",
 		                   "JET_Rtrk_TotalStat_Sub__1up",
 		                   "JET_Rtrk_TotalStat_Sub__1down",
+		                   "JET_Rtrk_Tracking_Sub__1up",
+		                   "JET_Rtrk_Tracking_Sub__1down",
 
+		                   # resolution uncertainty
 		                   "JET_JER",
 		                   "JET_JMR",
-		                   "JET_JD2R",
+		                   "JET_JD2R",		                   
 		                 ]
 
 		btagSysList = []

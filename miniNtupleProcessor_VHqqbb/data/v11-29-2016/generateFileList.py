@@ -16,3 +16,6 @@ def GenerateFileList(configName):
 if __name__ == "__main__":
 	GenerateFileList("reference")
 	GenerateFileList("CombMassOnly")
+
+	GenerateFileList("reference_sys")
+	GenerateFileList("CombMassOnly_sys")

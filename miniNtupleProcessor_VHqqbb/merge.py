@@ -75,8 +75,12 @@ def main(dirname, outputNameBase, outputDir):
 	rank = _comm.Get_rank()
 
 	# clear and create new outputDir
-	os.system("rm -rf "+outputDir)
-	os.system("mkdir "+outputDir)
+	if rank == 0:
+		os.system("rm -rf "+outputDir)
+		os.system("mkdir "+outputDir)
+
+	mkdirFinishSignal = _comm.bcast(True, root=0)
+	assert mkdirFinishSignal
 
 	dirListToMerge = GetDirList(dirname)
 	print "Processor %i: dir to be processed: %s" % (rank, dirListToMerge)
@@ -85,5 +89,5 @@ def main(dirname, outputNameBase, outputDir):
 		RunMerge(item, outputNameBase, outputDir)
 
 if __name__ == "__main__":
-	sampleName = "data"
+	sampleName = "WH_CombMassOnly_sys"
 	main("outputSys_"+sampleName, "hist_"+sampleName, "hist_%s_reduced" % (sampleName))
