@@ -200,7 +200,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._JetPtUpBound = 1e9 #1500.              # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
 		self._HiggsMassCut = (75, 145) #touch        # Standard Loose: 75~145, ~90%
 		                                             # Standard Tight: 90~135, ~68%
-		self._WZWP = "Medium"      # touch           # working point for W/Z tagging
+		self._WZWP = "80"      # touch           # working point for W/Z tagging
 
 		# track-jet
 
@@ -693,6 +693,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet = ROOT.TLorentzVector()
 		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
 		LeadCaloJet = ROOT.Particle(LeadCaloJet)
+		# old tagging tool
 		if self._WZWP == "Medium":
 			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[0])
 			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_medium[0])
@@ -701,6 +702,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_tight[0])
 			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_tight[0])
 			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[0] == 3) or (tree.hcand_boosted_Ztag_tight[0] == 3))   # W/Z, mass+D2 cut, tight
+		# new tagging tool
+		elif self._WZWP == "50":
+			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_smoothWtag_50[0])
+			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_smoothZtag_50[0])
+			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_smoothWtag_50[0] == 1) or (tree.hcand_boosted_smoothZtag_50[0] == 1))
+		elif self._WZWP == "80":
+			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_smoothWtag_80[0])
+			LeadCaloJet.Set("ZtagCode", tree.hcand_boosted_smoothZtag_80[0])
+			LeadCaloJet.Set("WZTagged", (tree.hcand_boosted_smoothWtag_80[0] == 1) or (tree.hcand_boosted_smoothZtag_80[0] == 1))
 		else:
 			print "ERROR! Unrecognized WZ Workign point:",self._WZWP
 			sys.exit(0)
@@ -716,6 +726,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
+		# old tagging tool
 		if self._WZWP == "Medium":
 			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[1])
 			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_medium[1])
@@ -724,6 +735,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_tight[1])
 			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_Ztag_tight[1])
 			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_Wtag_tight[1] == 3) or (tree.hcand_boosted_Ztag_tight[1] == 3))  # W/Z, mass+D2 cut, tight
+		# new tagging tool
+		elif self._WZWP == "50":
+			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_smoothWtag_50[1])
+			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_smoothZtag_50[1])
+			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_smoothWtag_50[1] == 1) or (tree.hcand_boosted_smoothZtag_50[1] == 1))
+		elif self._WZWP == "80":
+			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_smoothWtag_80[1])
+			SubLeadCaloJet.Set("ZtagCode", tree.hcand_boosted_smoothZtag_80[1])
+			SubLeadCaloJet.Set("WZTagged", (tree.hcand_boosted_smoothWtag_80[1] == 1) or (tree.hcand_boosted_smoothZtag_80[1] == 1))
 		else:
 			print "ERROR! Unrecognized WZ Working point:",self._WZWP
 			sys.exit(0)
@@ -1183,8 +1203,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Categorize event based on V-tagging (a subset of anti-V-tagging might be used for CR) #
 		#########################################################################################
 
-		PassVtagging = (VCandidateJet.Double("WZTagged") == 1)
-		AntiVtaggingCR = (VCandidateJet.Double("WtagCode") <= 1) and (VCandidateJet.Double("ZtagCode") <= 1)     # fail both W and Z mass window cut, making sure it fails the V-tagging. However, the "actual" anti-V-tagging CR might still be a subset of this
+		if (self._WZWP == "Medium") or (self._WZWP == "Tight"):
+			PassVtagging = (VCandidateJet.Double("WZTagged") == 1)
+			AntiVtaggingCR = (VCandidateJet.Double("WtagCode") <= 1) and (VCandidateJet.Double("ZtagCode") <= 1)     # fail both W and Z mass window cut, making sure it fails the V-tagging. However, the "actual" anti-V-tagging CR might still be a subset of this
+		elif (self._WZWP == "50") or (self._WZWP == "80"):
+			PassVtagging = (VCandidateJet.Double("WZTagged") == 1)
+
+			WtagCodeInt = int(VCandidateJet.Double("WtagCode"))
+			ZtagCodeInt = int(VCandidateJet.Double("ZtagCode"))
+			AntiVtaggingCR = (WtagCodeInt & 60) and (ZtagCodeInt & 60)     # in new tagging tool, failing both W and Z mass window cut means & with code 111100 (60)
+		else:
+			print "ERROR! Unrecognized WZ Working point:",self._WZWP
+			sys.exit(1)
 
 		# in case buggy things happen ...
 		if PassVtagging and AntiVtaggingCR:

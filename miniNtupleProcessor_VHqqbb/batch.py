@@ -1,12 +1,14 @@
 import os
 import time
 
-configName = "CombMassOnly"
+configName = "CombMassNewVtag"
 sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
 
 for sampleName in sampleList:
 	if sampleName == "JZXW":
 		nworkers = 200
+	elif (sampleName == "WH") or (sampleName == "ZH"):
+		nworkers = 100
 	else:
 		nworkers = 50
 

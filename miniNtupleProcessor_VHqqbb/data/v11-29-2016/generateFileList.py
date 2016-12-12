@@ -19,3 +19,5 @@ if __name__ == "__main__":
 
 	GenerateFileList("reference_sys")
 	GenerateFileList("CombMassOnly_sys")
+
+	GenerateFileList("CombMassNewVtag")
