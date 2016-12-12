@@ -171,7 +171,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v11-29-2016/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
@@ -200,7 +200,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		self._JetPtUpBound = 1e9 #1500.              # upper bound of large-R jet, due to calibration issue. Jet with pT larger than that do not have proper JMS uncertainties, unless one uses TA-mass
 		self._HiggsMassCut = (75, 145) #touch        # Standard Loose: 75~145, ~90%
 		                                             # Standard Tight: 90~135, ~68%
-		self._WZWP = "80"      # touch           # working point for W/Z tagging
+		self._WZWP = "50"      # touch               # working point for W/Z tagging
 
 		# track-jet
 
