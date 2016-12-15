@@ -171,7 +171,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01_update1/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch

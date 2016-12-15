@@ -1,7 +1,7 @@
 import os
 import time
 
-configName = "CombMassNewVtag"
+# configName = "CombMassNewVtag"
 sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
 
 for sampleName in sampleList:
@@ -12,7 +12,8 @@ for sampleName in sampleList:
 	else:
 		nworkers = 50
 
-	cmd = "python run.py -f %s -n %s" % (sampleName+"_"+configName, nworkers)
+	# cmd = "python run.py -f %s -n %s" % (sampleName+"_"+configName, nworkers)
+	cmd = "python run.py -f %s -n %s" % (sampleName, nworkers)
 	print cmd
 	os.system(cmd)
 	time.sleep(2)
