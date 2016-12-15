@@ -2,7 +2,8 @@ import os
 import time
 
 # configName = "CombMassNewVtag"
-sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
+# sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets", "JZXW"]
+sampleList = ["WH", "ZH", "ttbar", "Wjets", "Zjets"]
 
 for sampleName in sampleList:
 	if sampleName == "JZXW":
