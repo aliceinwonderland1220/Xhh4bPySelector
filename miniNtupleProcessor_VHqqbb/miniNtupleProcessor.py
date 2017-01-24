@@ -142,7 +142,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = True    # touch            # whether we blind the data
-		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
+		self._doJERStudy  = True   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
@@ -157,18 +157,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# touch
 
 		# 2015 reprocessed
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
-		self._Lumi = 3.21296          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
+		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
+		# self._Lumi = 3.21296          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
 		                                # https://atlas-lumicalc.cern.ch/results/2781f5/result.html
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2015_13_TeV_pp_data_taking_summa
 
 		# 2016
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
 		# self._Lumi = 27.0313          # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K)
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2016_13_TeV_pp_data_taking_summa
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.21296 + 27.0313
+		self._Lumi = 3.21296 + 27.0313
 
 		# X-section
 
@@ -186,15 +186,15 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# trigger
 		# touch
 
-		# self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
-		self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
+		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
+		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
 		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
 		# lepton/MET veto
 
-		self._doLeptonVeto = True   # touch                  # no "loose" lepton in the event
-		self._doMETVeto = True      # touch                 
+		self._doLeptonVeto = True      # touch                  # no "loose" lepton in the event
+		self._doMETVeto = True         # touch                 
 
 		# calo-jet
 
@@ -639,14 +639,23 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# Jet Cleaning #
 		################
 
-		passJetCleaning = True
-		for iAKT4 in range(tree.resolvedJets_pt.size()):
-			AKT4_pt = tree.resolvedJets_pt[iAKT4]
-			AKT4_passClean = tree.resolvedJets_clean_passLooseBad[iAKT4]
+		# old way, depricated
+		# passJetCleaning = True
+		# for iAKT4 in range(tree.resolvedJets_pt.size()):
+		# 	AKT4_pt = tree.resolvedJets_pt[iAKT4]
+		# 	AKT4_passClean = tree.resolvedJets_clean_passLooseBad[iAKT4]
 
-			if AKT4_pt < 30.: continue   # resolved people use GeV 
+		# 	if AKT4_pt < 30.: continue   # resolved people use GeV 
 
-			passJetCleaning = (passJetCleaning and (AKT4_passClean == 1))
+		# 	passJetCleaning = (passJetCleaning and (AKT4_passClean == 1))
+
+		# if not passJetCleaning: return
+
+		# for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, "PassJetCleaning", _isMC)
+		# self.MakeCutflowPlot(tree, "PassJetCleaning", _isMC)
+
+		# recommended way
+		passJetCleaning = tree.event_cleaning_qqbb
 
 		if not passJetCleaning: return
 
