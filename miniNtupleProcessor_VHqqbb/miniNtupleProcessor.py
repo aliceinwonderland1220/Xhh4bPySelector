@@ -157,14 +157,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# touch
 
 		# 2015 reprocessed
-		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
-		self._Lumi = 3.21296          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
+		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data15_13TeV.periodAllYear_DetStatus-v79-repro20-02_DQDefects-00-02-02_PHYS_StandardGRL_All_Good_25ns.xml"        # 2015 GRL
+		# self._Lumi = 3.21296          # Number for 2015 reprocessed data (20.7), using recommended GRL (above)
 		                                # https://atlas-lumicalc.cern.ch/results/2781f5/result.html
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2015_13_TeV_pp_data_taking_summa
 
 		# 2016
-		# self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		# self._Lumi = 27.0313          # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K)
+		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
+		self._Lumi = 27.0313          # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K)
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2016_13_TeV_pp_data_taking_summa
 
 		# 2015 + 2016 -- for MC
@@ -173,7 +173,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01_update1/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01_update2/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch
@@ -186,8 +186,8 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		# trigger
 		# touch
 
-		# self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
-		self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
+		self._TriggerList = ["HLT_j420_a10_lcw_L1J100"]         # 2016 trigger
+		# self._TriggerList = ["HLT_j360_a10_lcw_sub_L1J100"]     # 2015 trigger
 		# self._TriggerList = ["HLT_j360_a10r_L1J100"]            # 2015 Moriond trigger. Since we need to compare b-tagging results with 20.1, this trigger is reserved
 		self._doTriggerCut = True                               # When one wants to do the trigger study, make sure this option is turned OFF !
 
