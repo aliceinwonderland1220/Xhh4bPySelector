@@ -142,7 +142,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = True    # touch            # whether we blind the data
-		self._doJERStudy  = True   # touch            # turn on JERStudy --- basically the truth response stuffs
+		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
@@ -164,16 +164,17 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		# self._Lumi = 27.0313          # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K)
+		self._Lumi = 33.2572            # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K) --> 27.0313
+		                                # https://atlas-lumicalc.cern.ch/results/d8c076/result.html --> 6.22581
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2016_13_TeV_pp_data_taking_summa
 
 		# 2015 + 2016 -- for MC
-		self._Lumi = 3.21296 + 27.0313
+		# self._Lumi = 3.21296 + 33.2572
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-01-01_update1/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-02-02/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch

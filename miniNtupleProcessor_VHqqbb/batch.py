@@ -9,9 +9,9 @@ for sampleName in sampleList:
 	if sampleName == "JZXW":
 		nworkers = 200
 	elif (sampleName == "WH") or (sampleName == "ZH"):
-		nworkers = 100
+		nworkers = 70
 	else:
-		nworkers = 50
+		nworkers = 70
 
 	# cmd = "python run.py -f %s -n %s" % (sampleName+"_"+configName, nworkers)
 	cmd = "python run.py -f %s -n %s" % (sampleName, nworkers)
