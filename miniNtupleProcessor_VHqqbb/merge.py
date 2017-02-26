@@ -89,5 +89,5 @@ def main(dirname, outputNameBase, outputDir):
 		RunMerge(item, outputNameBase, outputDir)
 
 if __name__ == "__main__":
-	sampleName = "WH_CombMassOnly_sys"
+	sampleName = "Wjets"
 	main("outputSys_"+sampleName, "hist_"+sampleName, "hist_%s_reduced" % (sampleName))

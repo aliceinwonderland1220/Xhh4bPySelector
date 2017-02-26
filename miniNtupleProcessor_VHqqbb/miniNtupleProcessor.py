@@ -141,14 +141,14 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		}
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
-		self._doBlindData = True    # touch            # whether we blind the data
+		self._doBlindData = False    # touch            # whether we blind the data
 		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
 		                                               # 3: same as 2, but requires at least 1 b-tag in Higgs-tagging definition
 
-		self._ChannelNumberList = sorted(range(302316, 302340+1) + range(302366, 302390+1))      # from small to large
+		self._ChannelNumberList = sorted(range(302316, 302340+1) + range(302366, 302390+1) + range(306776, 306783+1))      # from small to large
 		self._ChannelNumberDict = defaultdict(lambda: -1)
 		for index in range(len(self._ChannelNumberList)):
 			self._ChannelNumberDict[self._ChannelNumberList[index]] = index                      # build map of channelnumber -> index
@@ -164,17 +164,18 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._Lumi = 33.2572            # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K) --> 27.0313
+		self._Lumi = 32.8616            # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K) --> 27.0313
 		                                # https://atlas-lumicalc.cern.ch/results/d8c076/result.html --> 6.22581
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2016_13_TeV_pp_data_taking_summa
+		                                # After luminosity central value updates announced in Feb 15, 2017 --> 32.8616 (calculated with lumi tag OfLumi-13TeV-008, but content of GRL remains same)
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.21296 + 33.2572
+		# self._Lumi = 3.21296 + 32.8616
 
 		# X-section
 
 		self._ApplyXsecWeight = True
-		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-02-02/filelist_Xsection.config"   # touch
+		self._XsectionConfig = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-02-02_update2/filelist_Xsection.config"   # touch
 
 		# Mtt stitching
 		# touch

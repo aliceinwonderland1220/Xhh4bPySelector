@@ -30,8 +30,8 @@ filename = ""
 # btagging systematics #
 ########################
 
-# CDI 2016-20_7-13TeV-MC15-CDI-2016-11-25_v1.root
-# Should be in total 52+1 b-tagging systematics
+# CDI 2016-20_7-13TeV-MC15-CDI-2017-01-31_v1.root
+# Should be in total 58+1 b-tagging systematics
 FT_SysNameList = [
                   '',
                   'FT_EFF_Eigen_B_0__1up',
@@ -52,8 +52,6 @@ FT_SysNameList = [
                   'FT_EFF_Eigen_C_2__1down',
                   'FT_EFF_Eigen_C_3__1up',
                   'FT_EFF_Eigen_C_3__1down',
-                  'FT_EFF_Eigen_C_4__1up',
-                  'FT_EFF_Eigen_C_4__1down',
                   'FT_EFF_Eigen_Light_0__1up',
                   'FT_EFF_Eigen_Light_0__1down',
                   'FT_EFF_Eigen_Light_1__1up',
@@ -82,6 +80,14 @@ FT_SysNameList = [
                   'FT_EFF_Eigen_Light_12__1down',
                   'FT_EFF_Eigen_Light_13__1up',
                   'FT_EFF_Eigen_Light_13__1down',
+                  'FT_EFF_Eigen_Light_14__1up',
+                  'FT_EFF_Eigen_Light_14__1down',
+                  'FT_EFF_Eigen_Light_15__1up',
+                  'FT_EFF_Eigen_Light_15__1down',
+                  'FT_EFF_Eigen_Light_16__1up',
+                  'FT_EFF_Eigen_Light_16__1down',
+                  'FT_EFF_Eigen_Light_17__1up',
+                  'FT_EFF_Eigen_Light_17__1down',
                   'FT_EFF_extrapolation__1up',
                   'FT_EFF_extrapolation__1down',
                   'FT_EFF_extrapolation_from_charm__1up',
@@ -252,32 +258,13 @@ def runShell():
 	(options, args) = parser.parse_args()
 
 	global filename
-	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-02-02/filelist_%s.txt" % (options.sampleName)
+	filename = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/v02-02-02_update2/filelist_%s.txt" % (options.sampleName)
 
 	if options.allSys:
 		print "Removing outputSys ..."
 		os.system("rm -rf outputSys")
 
 		nonbtagSysList = [
-		                   # calo-mass version
-		                   # "JET_Rtrk_Baseline_Kin__1up",
-		                   # "JET_Rtrk_Baseline_Kin__1down",
-		                   # "JET_Rtrk_Tracking_Kin__1up",
-		                   # "JET_Rtrk_Tracking_Kin__1down",
-		                   # "JET_Rtrk_Modelling_Kin__1up",
-		                   # "JET_Rtrk_Modelling_Kin__1down",
-		                   # "JET_Rtrk_TotalStat_Kin__1up",
-		                   # "JET_Rtrk_TotalStat_Kin__1down",
-
-		                   # "JET_Rtrk_Baseline_Sub__1up",
-		                   # "JET_Rtrk_Baseline_Sub__1down",
-		                   # "JET_Rtrk_Tracking_Sub__1up",
-		                   # "JET_Rtrk_Tracking_Sub__1down",
-		                   # "JET_Rtrk_Modelling_Sub__1up",
-		                   # "JET_Rtrk_Modelling_Sub__1down",
-		                   # "JET_Rtrk_TotalStat_Sub__1up",
-		                   # "JET_Rtrk_TotalStat_Sub__1down",
-
 		                   # combined mass version
 		                   "JET_Comb_Baseline_Kin__1up",
 		                   "JET_Comb_Baseline_Kin__1down",
@@ -310,8 +297,8 @@ def runShell():
 				btagSysList.append(item_shortcut)
 
 		# put b-tagging first
-		sysList = [",".join(btagSysList)] + nonbtagSysList
-		# sysList = [",".join(btagSysList)]                 # b-tagging only
+		# sysList = [",".join(btagSysList)] + nonbtagSysList
+		sysList = [",".join(btagSysList)]                 # b-tagging only
 		# sysList = nonbtagSysList                        # non b-tagging only
 
 		print "Batch processing systematics list:"
