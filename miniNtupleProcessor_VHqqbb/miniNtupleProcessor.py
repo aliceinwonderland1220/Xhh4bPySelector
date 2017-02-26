@@ -142,7 +142,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		self._ForceDataMC = None                       # Force to run in either "Data" or "MC". This should be set as None most of the time.
 		self._doBlindData = False    # touch            # whether we blind the data
-		self._doJERStudy  = False   # touch            # turn on JERStudy --- basically the truth response stuffs
+		self._doJERStudy  = True   # touch            # turn on JERStudy --- basically the truth response stuffs
 		self._VHAmbiguityScheme = 7 # touch            # How to solve V/H ambiguity:
 		                                               # 1: based on V-tagging / anti-V-tagging
 		                                               # 2: based on VH / HV combination and distance, using both V-tagging and H-tagging
@@ -164,13 +164,13 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		# 2016
 		self._GRLXml = os.environ["Xhh4bPySelector_dir"]+"/miniNtupleProcessor_VHqqbb/data/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"          # 2016 GRL
-		self._Lumi = 32.8616            # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K) --> 27.0313
+		# self._Lumi = 32.8616            # https://atlas-lumicalc.cern.ch/results/da969b/result.html (A~K) --> 27.0313
 		                                # https://atlas-lumicalc.cern.ch/results/d8c076/result.html --> 6.22581
 		                                # same as number reported here: https://twiki.cern.ch/twiki/bin/view/AtlasProtected/GoodRunListsForAnalysisRun2#2016_13_TeV_pp_data_taking_summa
 		                                # After luminosity central value updates announced in Feb 15, 2017 --> 32.8616 (calculated with lumi tag OfLumi-13TeV-008, but content of GRL remains same)
 
 		# 2015 + 2016 -- for MC
-		# self._Lumi = 3.21296 + 32.8616
+		self._Lumi = 3.21296 + 32.8616
 
 		# X-section
 
@@ -1248,6 +1248,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		for triggerName in PassedTriggerList: self.MakeTriggerPlot(tree, triggerName, VtagString, _isMC)
 		self.MakeCutflowPlot(tree, VtagString, _isMC)
 
+		#
+		# Calo-Jet Response (for MC Only) for Higgs Jet Only Right Before Muon Correction
+		#
+
+		if self._doJERStudy:
+			CaloJetListInputForJER = [(iCaloJet, CaloJet) for iCaloJet, CaloJet in enumerate(CaloJetList) if CaloJet.Double("nHBosons") == 1]
+
+			self.MakeJERPlots(tree, CaloJetListInputForJER, "BeforeMuonCorrection")
+			self.MakeJERPlots2(tree, CaloJetListInputForJER, "BeforeMuonCorrection")
+
 		##################################################
 		# Now put in the muon-corrected 4-p for Calo-Jet #
 		##################################################
@@ -1260,6 +1270,16 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 					sumMuonCorr += (Muons[TrackJet.Int("MuonAssocIndex")].p)
 
 			CaloJet.p = CaloJet.p + sumMuonCorr
+
+		#
+		# Calo-Jet Response (for MC Only) for Higgs Jet Only Right After Muon Correction
+		#
+
+		if self._doJERStudy:
+			CaloJetListInputForJER = [(iCaloJet, CaloJet) for iCaloJet, CaloJet in enumerate(CaloJetList) if CaloJet.Double("nHBosons") == 1]
+
+			self.MakeJERPlots(tree, CaloJetListInputForJER, "AfterMuonCorrection")
+			self.MakeJERPlots2(tree, CaloJetListInputForJER, "AfterMuonCorrection")
 
 		#################################################
 		# From now on, all calo-jet has muon correction #
@@ -1664,6 +1684,9 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				TruthMatched = tree.truth_hcand_boosted_match[iCaloJet]
 
 				histsvc.AutoFill("GoodEvent", "_JERStudy", "CaloJetPt_CaloJetTruthMatch__"+CutName, CaloJet.p.Pt(), TruthMatched, self._EvtWeight[0], 40, 0, 2000, 2, -0.5, 1.5)
+
+				# some kineamtic plots
+				histsvc.AutoFill("GoodEvent", "_JERStudy", "CaloJetPt_CaloJetM__"+CutName, CaloJet.p.Pt(), CaloJet.p.M(), self._EvtWeight[0], 40, 0, 2000, 60, 0, 300)
 
 				if TruthMatched:
 					MatchedTruthJet = ROOT.TLorentzVector()
