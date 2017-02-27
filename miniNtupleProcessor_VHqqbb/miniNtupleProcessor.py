@@ -706,6 +706,19 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet = ROOT.TLorentzVector()
 		LeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[0]/1000., tree.hcand_boosted_eta[0], tree.hcand_boosted_phi[0], tree.hcand_boosted_m[0]/1000.)
 		LeadCaloJet = ROOT.Particle(LeadCaloJet)
+
+		LeadCaloJet_CaloComponent = ROOT.TLorentzVector()
+		LeadCaloJet_CaloComponent.SetPtEtaPhiM(tree.hcand_boosted_ptcalo[0]/1000., tree.hcand_boosted_etacalo[0], tree.hcand_boosted_phicalo[0], tree.hcand_boosted_mcalo[0]/1000.)
+		LeadCaloJet_CaloComponent = ROOT.Particle(LeadCaloJet_CaloComponent)
+
+		LeadCaloJet_TAComponent = ROOT.TLorentzVector()
+		LeadCaloJet_TAComponent.SetPtEtaPhiM(tree.hcand_boosted_ptTA[0]/1000., tree.hcand_boosted_etaTA[0], tree.hcand_boosted_phiTA[0], tree.hcand_boosted_mTA[0]/1000.)
+		LeadCaloJet_TAComponent = ROOT.Particle(LeadCaloJet_TAComponent)
+
+		LeadCaloJet.AddVec("AssocComponents")
+		LeadCaloJet.Add("AssocComponents", LeadCaloJet_CaloComponent)
+		LeadCaloJet.Add("AssocComponents", LeadCaloJet_TAComponent)
+
 		# old tagging tool
 		if self._WZWP == "Medium":
 			LeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[0])
@@ -736,9 +749,24 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 		LeadCaloJet.Set("nZBosons", tree.hcand_boosted_nZBosons[0])
 		LeadCaloJet.Set("nTrackJet", tree.jet_ak2track_asso_n[0])
 
+
+
 		SubLeadCaloJet = ROOT.TLorentzVector()
 		SubLeadCaloJet.SetPtEtaPhiM(tree.hcand_boosted_pt[1]/1000., tree.hcand_boosted_eta[1], tree.hcand_boosted_phi[1], tree.hcand_boosted_m[1]/1000.)
 		SubLeadCaloJet = ROOT.Particle(SubLeadCaloJet)
+
+		SubLeadCaloJet_CaloComponent = ROOT.TLorentzVector()
+		SubLeadCaloJet_CaloComponent.SetPtEtaPhiM(tree.hcand_boosted_ptcalo[1]/1000., tree.hcand_boosted_etacalo[1], tree.hcand_boosted_phicalo[1], tree.hcand_boosted_mcalo[1]/1000.)
+		SubLeadCaloJet_CaloComponent = ROOT.Particle(SubLeadCaloJet_CaloComponent)
+
+		SubLeadCaloJet_TAComponent = ROOT.TLorentzVector()
+		SubLeadCaloJet_TAComponent.SetPtEtaPhiM(tree.hcand_boosted_ptTA[1]/1000., tree.hcand_boosted_etaTA[1], tree.hcand_boosted_phiTA[1], tree.hcand_boosted_mTA[1]/1000.)
+		SubLeadCaloJet_TAComponent = ROOT.Particle(SubLeadCaloJet_TAComponent)
+
+		SubLeadCaloJet.AddVec("AssocComponents")
+		SubLeadCaloJet.Add("AssocComponents", SubLeadCaloJet_CaloComponent)
+		SubLeadCaloJet.Add("AssocComponents", SubLeadCaloJet_TAComponent)
+
 		# old tagging tool
 		if self._WZWP == "Medium":
 			SubLeadCaloJet.Set("WtagCode", tree.hcand_boosted_Wtag_medium[1])
@@ -997,6 +1025,7 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 
 		if self._optDebug: print "ProcessEntry: Associating Muons to track-jets. Attention: No muon correction done here!"
 
+		# the association is more between muon / track jets, thus calo-jet is only an auxiliary object and no need to be the actual "calo" component
 		CaloJetListForMuonCorrection = [ LeadCaloJet, SubLeadCaloJet ]
 		TrackJetListForMuonCorrection = []
 		for CaloJet in CaloJetListForMuonCorrection: TrackJetListForMuonCorrection += [ TrackJet for TrackJet in CaloJet.ObjVec("AssocTrackJets") ]
@@ -1258,9 +1287,10 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 			self.MakeJERPlots(tree, CaloJetListInputForJER, "BeforeMuonCorrection")
 			self.MakeJERPlots2(tree, CaloJetListInputForJER, "BeforeMuonCorrection")
 
-		##################################################
-		# Now put in the muon-corrected 4-p for Calo-Jet #
-		##################################################
+		########################################################
+		# Now put in the muon-corrected 4-p for Calo-Jet       #
+		# Hmm, it gets a bit complicated for combined mass ... #
+		########################################################
 
 		for iCaloJet, CaloJet in enumerate([HCandidateJet]):
 			sumMuonCorr = ROOT.TLorentzVector()
@@ -1269,7 +1299,34 @@ class miniNtupleProcessor(PySelectorBase.PySelectorBase):
 				if TrackJet.Exists("MuonAssocIndex"):
 					sumMuonCorr += (Muons[TrackJet.Int("MuonAssocIndex")].p)
 
-			CaloJet.p = CaloJet.p + sumMuonCorr
+			CaloComponent = CaloJet.Obj("AssocComponents", 0)
+			TAComponent = CaloJet.Obj("AssocComponents", 1)
+
+			# get weight
+			w_comb = (CaloJet.p.M() - TAComponent.p.M()) / (CaloComponent.p.M() - TAComponent.p.M())
+
+			# apply muon correction
+			CaloComponent_4p_beforeMuon = CaloComponent.p
+			CaloComponent_4p_afterMuon = CaloComponent_4p_beforeMuon + sumMuonCorr
+
+			corr_m   = CaloComponent_4p_afterMuon.M() / CaloComponent_4p_beforeMuon.M()
+			corr_pt  = CaloComponent_4p_afterMuon.Pt() / CaloComponent_4p_beforeMuon.Pt()
+			corr_e   = CaloComponent_4p_afterMuon.E() / CaloComponent_4p_beforeMuon.E()
+			corr_eta = CaloComponent_4p_afterMuon.Eta() / CaloComponent_4p_beforeMuon.Eta()
+			corr_phi = CaloComponent_4p_afterMuon.Phi() / CaloComponent_4p_beforeMuon.Phi()
+
+			# re-calculate 4-momentum
+			m_new   = w_comb * CaloComponent.p.M() * corr_m + (1. - w_comb) * TAComponent.p.M() * corr_pt
+			e_new   = CaloJet.p.E() * corr_e
+			eta_new = CaloJet.p.Eta() * corr_eta
+			phi_new = CaloJet.p.Phi() * corr_phi
+
+			if m_new < e_new:
+				pt_new = ROOT.TMath.Sqrt(e_new * e_new - m_new * m_new) / ROOT.TMath.CosH(eta_new)
+
+				p4_new = ROOT.TLorentzVector()
+				p4_new.SetPtEtaPhiM(pt_new, eta_new, phi_new, m_new)
+				CaloJet.p = p4_new
 
 		#
 		# Calo-Jet Response (for MC Only) for Higgs Jet Only Right After Muon Correction
